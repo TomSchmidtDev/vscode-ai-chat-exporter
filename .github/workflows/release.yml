@@ -18,11 +18,24 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Set version and detect preview
+        id: meta
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          node -e "const fs=require('fs'); const p=require('./package.json'); p.version='${VERSION}'; fs.writeFileSync('package.json', JSON.stringify(p, null, 2)+'\n')"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          if [[ "${TAG}" == *-preview* ]]; then
+            echo "is_preview=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_preview=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build extension
         run: npm run build
@@ -33,7 +46,7 @@ jobs:
       - name: Get VSIX filename
         id: vsix
         run: |
-          VSIX_FILE=$(ls *.vsix)
+          VSIX_FILE=$(ls *.vsix | head -1)
           echo "file=${VSIX_FILE}" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
@@ -41,9 +54,10 @@ jobs:
         with:
           files: ${{ steps.vsix.outputs.file }}
           generate_release_notes: true
+          prerelease: ${{ steps.meta.outputs.is_preview == 'true' }}
 
       - name: Publish to VS Code Marketplace
-        if: "${{ secrets.VSCE_PAT != '' }}"
+        if: ${{ steps.meta.outputs.is_preview == 'false' && secrets.VSCE_PAT != '' }}
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: npx @vscode/vsce publish --no-dependencies -p "$VSCE_PAT"
