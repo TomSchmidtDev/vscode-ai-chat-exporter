@@ -1,0 +1,135 @@
+{
+  "name": "vscode-ai-chat-exporter",
+  "displayName": "AI Chat Exporter",
+  "description": "Export GitHub Copilot Chat history to Markdown and HTML",
+  "version": "0.1.0",
+  "publisher": "TomSchmidtDev",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "keywords": ["copilot", "chat", "export", "markdown", "html"],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "aiChatExporter.open",
+        "title": "AI Chat Exporter: Open",
+        "icon": "$(export)"
+      },
+      {
+        "command": "aiChatExporter.refresh",
+        "title": "AI Chat Exporter: Refresh Sessions",
+        "icon": "$(refresh)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ai-chat-exporter",
+          "title": "AI Chat Exporter",
+          "icon": "$(comment-discussion)"
+        }
+      ]
+    },
+    "views": {
+      "ai-chat-exporter": [
+        {
+          "type": "webview",
+          "id": "aiChatExporter.mainView",
+          "name": "Chat Sessions"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "aiChatExporter.refresh",
+          "when": "view == aiChatExporter.mainView",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "AI Chat Exporter",
+      "properties": {
+        "aiChatExporter.defaultTheme": {
+          "type": "string",
+          "default": "github-dark",
+          "enum": [
+            "catppuccin-mocha",
+            "dracula",
+            "nord",
+            "github-dark",
+            "solarized-dark",
+            "monokai-pro",
+            "tokyo-night",
+            "material-ocean",
+            "one-dark",
+            "light-classic",
+            "custom"
+          ],
+          "enumDescriptions": [
+            "Catppuccin Mocha",
+            "Dracula",
+            "Nord",
+            "GitHub Dark",
+            "Solarized Dark",
+            "Monokai Pro",
+            "Tokyo Night",
+            "Material Ocean",
+            "One Dark",
+            "Light Classic",
+            "Custom (use aiChatExporter.customColors)"
+          ],
+          "description": "Default color theme for HTML export"
+        },
+        "aiChatExporter.outputDirectory": {
+          "type": "string",
+          "default": "",
+          "description": "Default output directory for exports (empty = prompt each time)"
+        },
+        "aiChatExporter.includeMetadata": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include session metadata (date, model, workspace) in export"
+        },
+        "aiChatExporter.codeHighlighting": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable syntax highlighting in HTML export"
+        },
+        "aiChatExporter.storageBasePath": {
+          "type": "string",
+          "default": "",
+          "description": "Override VS Code storage base path (useful for VS Code Insiders or custom installations)"
+        },
+        "aiChatExporter.customColors": {
+          "type": "object",
+          "default": {},
+          "description": "Override theme colors for custom theme. Keys: background, surface, userBubble, assistantBubble, userText, assistantText, accent, border, codeBackground, codeText, timestamp, headerBackground"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build:webview": "vite build --config webview-ui/vite.config.ts",
+    "build:extension": "node esbuild.js",
+    "build": "npm run build:webview && npm run build:extension",
+    "watch:extension": "node esbuild.js --watch",
+    "watch:webview": "vite build --config webview-ui/vite.config.ts --watch",
+    "vscode:prepublish": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0",
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "highlight.js": "^11.9.0",
+    "marked": "^11.0.0"
+  }
+}

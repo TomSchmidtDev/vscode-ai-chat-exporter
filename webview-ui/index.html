@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Chat Exporter</title>
+</head>
+<body>
+  <div id="root">
+    <div id="toolbar">
+      <button id="btn-refresh" class="secondary" title="Refresh sessions">↻ Refresh</button>
+      <button id="btn-export-md" title="Export selected sessions to Markdown">Export MD</button>
+      <button id="btn-export-html" title="Export selected sessions to HTML">Export HTML</button>
+      <select id="theme-select" title="HTML export theme">
+        <option value="github-dark">GitHub Dark</option>
+        <option value="catppuccin-mocha">Catppuccin Mocha</option>
+        <option value="dracula">Dracula</option>
+        <option value="nord">Nord</option>
+        <option value="solarized-dark">Solarized Dark</option>
+        <option value="monokai-pro">Monokai Pro</option>
+        <option value="tokyo-night">Tokyo Night</option>
+        <option value="material-ocean">Material Ocean</option>
+        <option value="one-dark">One Dark</option>
+        <option value="light-classic">Light Classic</option>
+        <option value="custom">Custom</option>
+      </select>
+      <button id="btn-settings" class="secondary" title="Open settings">⚙</button>
+    </div>
+
+    <div id="main">
+      <div id="session-panel">
+        <div id="session-actions">
+          <button id="btn-select-all" class="secondary">All</button>
+          <button id="btn-select-none" class="secondary">None</button>
+        </div>
+        <div id="session-list">
+          <div class="loading">Loading…</div>
+        </div>
+      </div>
+
+      <div id="preview-panel">
+        <div id="preview-placeholder">Click a session to preview</div>
+        <iframe id="preview-frame" sandbox="allow-same-origin"></iframe>
+      </div>
+    </div>
+
+    <div id="status-bar">Ready</div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
