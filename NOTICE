@@ -1,0 +1,75 @@
+AI Chat Exporter
+Copyright 2026 TomSchmidtDev
+
+This product includes software developed by third parties:
+
+--------------------------------------------------------------------------------
+marked (https://github.com/markedjs/marked)
+Copyright 2018-2024 the marked authors.
+Licensed under the MIT License (MIT).
+
+  marked@11.x
+
+A copy of the MIT License is available at:
+  https://opensource.org/licenses/MIT
+
+--------------------------------------------------------------------------------
+highlight.js (https://highlightjs.org)
+Copyright 2006-2024 Ivan Sagalaev.
+Licensed under the BSD 3-Clause License.
+
+  highlight.js@11.x
+
+A copy of the BSD 3-Clause License is available at:
+  https://opensource.org/licenses/BSD-3-Clause
+
+--------------------------------------------------------------------------------
+Vite (https://vitejs.dev)
+Copyright 2019-2024 Evan You and Vite contributors.
+Licensed under the MIT License (MIT).
+
+  vite@5.x (dev dependency)
+
+A copy of the MIT License is available at:
+  https://opensource.org/licenses/MIT
+
+--------------------------------------------------------------------------------
+esbuild (https://esbuild.github.io)
+Copyright 2020 Evan Wallace.
+Licensed under the MIT License (MIT).
+
+  esbuild@0.20.x (dev dependency)
+
+A copy of the MIT License is available at:
+  https://opensource.org/licenses/MIT
+
+--------------------------------------------------------------------------------
+TypeScript (https://www.typescriptlang.org)
+Copyright 2012-2024 Microsoft Corporation.
+Licensed under the Apache License, Version 2.0 (Apache-2.0).
+
+  typescript@5.x (dev dependency)
+
+A copy of the Apache License, Version 2.0 is available at:
+  http://www.apache.org/licenses/LICENSE-2.0
+
+--------------------------------------------------------------------------------
+@types/vscode (https://github.com/DefinitelyTyped/DefinitelyTyped)
+Copyright Microsoft Corporation.
+Licensed under the MIT License (MIT).
+
+  @types/vscode@1.85.x (dev dependency)
+
+A copy of the MIT License is available at:
+  https://opensource.org/licenses/MIT
+
+--------------------------------------------------------------------------------
+@vscode/vsce (https://github.com/microsoft/vscode-vsce)
+Copyright 2015-2024 Microsoft Corporation.
+Licensed under the MIT License (MIT).
+
+  @vscode/vsce (dev dependency)
+
+A copy of the MIT License is available at:
+  https://opensource.org/licenses/MIT
+--------------------------------------------------------------------------------

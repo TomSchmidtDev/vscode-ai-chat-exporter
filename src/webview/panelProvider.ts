@@ -230,6 +230,8 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
       <div id="session-actions">
         <button id="btn-select-all" class="secondary">All</button>
         <button id="btn-select-none" class="secondary">None</button>
+        <button id="btn-toggle-user" class="toggle active" title="Toggle user messages">You</button>
+        <button id="btn-toggle-copilot" class="toggle active" title="Toggle Copilot messages">Copilot</button>
       </div>
       <div id="session-list"><div class="loading">Loading&#8230;</div></div>
     </div>

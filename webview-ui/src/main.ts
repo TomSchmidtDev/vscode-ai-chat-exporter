@@ -16,6 +16,8 @@ let allWorkspaces: ChatWorkspace[] = [];
 const selectedSessions = new Set<string>();
 const selectedMessages = new Map<string, Set<string>>();
 let activePreviewId: string | null = null;
+let showUser = true;
+let showAssistant = true;
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
 
@@ -29,6 +31,8 @@ const themeSelect = document.getElementById('theme-select') as HTMLSelectElement
 const statusBar = document.getElementById('status-bar')!;
 const selectAllBtn = document.getElementById('btn-select-all')!;
 const selectNoneBtn = document.getElementById('btn-select-none')!;
+const toggleUserBtn = document.getElementById('btn-toggle-user')!;
+const toggleCopilotBtn = document.getElementById('btn-toggle-copilot')!;
 
 // ─── Message handling ─────────────────────────────────────────────────────────
 
@@ -86,6 +90,18 @@ selectNoneBtn.addEventListener('click', () => {
 });
 
 document.getElementById('btn-settings')?.addEventListener('click', () => post({ type: 'openSettings' }));
+
+toggleUserBtn.addEventListener('click', () => {
+  showUser = !showUser;
+  toggleUserBtn.classList.toggle('active', showUser);
+  applyRoleFilter();
+});
+
+toggleCopilotBtn.addEventListener('click', () => {
+  showAssistant = !showAssistant;
+  toggleCopilotBtn.classList.toggle('active', showAssistant);
+  applyRoleFilter();
+});
 
 // ─── Rendering ────────────────────────────────────────────────────────────────
 
@@ -198,10 +214,34 @@ function truncate(s: string, max: number): string {
 
 function buildMessageFilters(sessionIds: string[]): Record<string, string[]> {
   const filters: Record<string, string[]> = {};
-  for (const id of sessionIds) {
-    if (selectedMessages.has(id)) filters[id] = Array.from(selectedMessages.get(id)!);
+  for (const ws of allWorkspaces) {
+    for (const session of ws.sessions) {
+      if (!sessionIds.includes(session.id)) { continue; }
+      // Start with explicitly selected messages (or all if not expanded yet)
+      const base = selectedMessages.has(session.id)
+        ? Array.from(selectedMessages.get(session.id)!)
+        : session.messages.map(m => m.id);
+      // Apply role toggle filter
+      const allowed = base.filter(msgId => {
+        const msg = session.messages.find(m => m.id === msgId);
+        if (!msg) { return false; }
+        if (msg.role === 'user' && !showUser) { return false; }
+        if (msg.role === 'assistant' && !showAssistant) { return false; }
+        return true;
+      });
+      filters[session.id] = allowed;
+    }
   }
   return filters;
+}
+
+function applyRoleFilter(): void {
+  document.querySelectorAll<HTMLElement>('.message-item').forEach(el => {
+    const isUser = el.classList.contains('message-user');
+    const isAssistant = el.classList.contains('message-assistant');
+    if (isUser) { el.classList.toggle('role-hidden', !showUser); }
+    if (isAssistant) { el.classList.toggle('role-hidden', !showAssistant); }
+  });
 }
 
 function makeEl<K extends keyof HTMLElementTagNameMap>(

@@ -243,6 +243,25 @@ button.secondary:hover { background: var(--vscode-button-secondaryHoverBackgroun
   white-space: nowrap;
 }
 
+/* ── Toggle buttons ───────────────────────────────────────────────────────── */
+
+button.toggle {
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  opacity: 0.5;
+  border: 1px solid var(--vscode-button-border, transparent);
+}
+
+button.toggle.active {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  opacity: 1;
+}
+
+button.toggle:hover { background: var(--vscode-button-hoverBackground); opacity: 1; }
+
+.message-item.role-hidden { display: none; }
+
 /* ── Misc states ──────────────────────────────────────────────────────────── */
 
 .loading, .empty-msg, .error-msg {

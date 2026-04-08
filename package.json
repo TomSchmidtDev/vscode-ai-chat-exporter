@@ -4,11 +4,34 @@
   "description": "Export GitHub Copilot Chat history to Markdown and HTML",
   "version": "0.1.0",
   "publisher": "TomSchmidtDev",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TomSchmidtDev/vscode-ai-chat-exporter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TomSchmidtDev/vscode-ai-chat-exporter/issues"
+  },
+  "homepage": "https://github.com/TomSchmidtDev/vscode-ai-chat-exporter#readme",
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#1e1e2e",
+    "theme": "dark"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Other"],
-  "keywords": ["copilot", "chat", "export", "markdown", "html"],
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "copilot",
+    "chat",
+    "export",
+    "markdown",
+    "html",
+    "github copilot"
+  ],
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
@@ -119,11 +142,14 @@
     "build": "npm run build:webview && npm run build:extension",
     "watch:extension": "node esbuild.js --watch",
     "watch:webview": "vite build --config webview-ui/vite.config.ts --watch",
-    "vscode:prepublish": "npm run build"
+    "vscode:prepublish": "npm run build",
+    "package": "npx @vscode/vsce package --no-dependencies",
+    "publish": "npx @vscode/vsce publish --no-dependencies"
   },
   "devDependencies": {
     "@types/node": "^18.0.0",
     "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.7.1",
     "esbuild": "^0.20.0",
     "typescript": "^5.3.0",
     "vite": "^5.0.0"
