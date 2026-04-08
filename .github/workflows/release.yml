@@ -37,6 +37,17 @@ jobs:
             echo "is_preview=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Check VSCE_PAT availability
+        id: pat
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -n "$VSCE_PAT" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build extension
         run: npm run build
 
@@ -57,7 +68,7 @@ jobs:
           prerelease: ${{ steps.meta.outputs.is_preview == 'true' }}
 
       - name: Publish to VS Code Marketplace
-        if: ${{ steps.meta.outputs.is_preview == 'false' && secrets.VSCE_PAT != '' }}
+        if: ${{ steps.meta.outputs.is_preview == 'false' && steps.pat.outputs.available == 'true' }}
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: npx @vscode/vsce publish --no-dependencies -p "$VSCE_PAT"

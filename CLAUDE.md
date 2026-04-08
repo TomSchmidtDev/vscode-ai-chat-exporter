@@ -48,6 +48,8 @@ This project follows [Semantic Versioning](https://semver.org/). The version in 
 
 If `VSCE_PAT` is not set, the publish step is skipped silently — the GitHub Release (with VSIX) is always created.
 
+> **Note:** `secrets` context cannot be used directly in `if:` expressions alongside step outputs (GitHub Actions limitation). The workflow uses a dedicated "Check VSCE_PAT availability" step that exposes the secret's presence as a step output (`steps.pat.outputs.available`), which is then safe to use in `if:` conditions.
+
 ---
 
 ## Node.js Version
