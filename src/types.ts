@@ -4,13 +4,15 @@ export interface RawChatSession {
   version?: number;
   sessionId: string;
   creationDate: number;
-  lastMessageDate: number;
+  lastMessageDate?: number;
   customTitle?: string;
   responderUsername?: string;
   initialLocation?: string;
   mode?: { id: string; kind: string };
   requests: RawChatRequest[];
   selectedModel?: { identifier: string; metadata?: { name?: string } };
+  // v3 .jsonl format: selectedModel lives inside inputState
+  inputState?: { selectedModel?: { identifier: string; metadata?: { name?: string } } };
   hasPendingEdits?: boolean;
 }
 

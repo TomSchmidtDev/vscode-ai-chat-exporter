@@ -59,7 +59,7 @@ async function findChatSessionFiles(hashDir: string): Promise<string[]> {
   try {
     const entries = await fs.promises.readdir(chatSessionsDir);
     return entries
-      .filter(f => f.endsWith('.json'))
+      .filter(f => f.endsWith('.json') || f.endsWith('.jsonl'))
       .map(f => path.join(chatSessionsDir, f));
   } catch {
     return [];
