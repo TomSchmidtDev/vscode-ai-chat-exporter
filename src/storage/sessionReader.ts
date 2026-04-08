@@ -98,7 +98,8 @@ function reconstructResponseText(parts: RawResponsePart[]): string {
 
   for (const part of parts) {
     if (!('kind' in part)) {
-      segments.push((part as { value: string }).value);
+      const v = (part as { value?: unknown }).value;
+      if (typeof v === 'string') { segments.push(v); }
     } else if (part.kind === 'codeblockUri') {
       const p = part as { kind: string; uri: { fsPath?: string; path?: string } };
       const fsPath = p.uri?.fsPath ?? p.uri?.path ?? '';

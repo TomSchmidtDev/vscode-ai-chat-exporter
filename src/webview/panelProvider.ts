@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { randomBytes } from 'crypto';
 import { ExtensionToWebview, WebviewToExtension, ChatSession, ChatWorkspace } from '../types';
 import { getWorkspaceStorageBase } from '../storage/pathResolver';
 import { discoverAllWorkspaces } from '../storage/workspaceDiscovery';
@@ -55,9 +56,11 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
         this._sendPreview(msg.sessionId);
         break;
       case 'exportMd':
+        if (!Array.isArray(msg.sessionIds) || typeof msg.messageFilters !== 'object' || !msg.messageFilters) { return; }
         await this._exportMd(msg.sessionIds, msg.messageFilters);
         break;
       case 'exportHtml':
+        if (!Array.isArray(msg.sessionIds) || typeof msg.messageFilters !== 'object' || !msg.messageFilters) { return; }
         await this._exportHtml(msg.sessionIds, msg.messageFilters, msg.theme);
         break;
       case 'openSettings':
@@ -79,13 +82,17 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
         const sessions: ChatSession[] = [];
 
         for (const file of ws.chatSessionFiles) {
-          const raw = await readSessionFile(file);
-          if (!raw || raw.requests.length === 0) {
-            continue;
+          try {
+            const raw = await readSessionFile(file);
+            if (!raw || raw.requests.length === 0) {
+              continue;
+            }
+            const session = normalizeSession(raw, ws.hash, ws.displayName);
+            this._sessions.set(session.id, session);
+            sessions.push(session);
+          } catch {
+            // skip malformed file, continue with remaining files
           }
-          const session = normalizeSession(raw, ws.hash, ws.displayName);
-          this._sessions.set(session.id, session);
-          sessions.push(session);
         }
 
         if (sessions.length > 0) {
@@ -199,7 +206,7 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
 
   <link rel="stylesheet" href="${styleUri}">
   <title>AI Chat Exporter</title>
@@ -252,6 +259,5 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
 }
 
 function generateNonce(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  return Array.from({ length: 32 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  return randomBytes(16).toString('hex');
 }

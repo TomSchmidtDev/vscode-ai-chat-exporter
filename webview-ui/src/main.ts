@@ -1,4 +1,3 @@
-import './style.css';
 import type { ChatWorkspace, ChatSession, ChatMessage, ExtensionToWebview, WebviewToExtension } from './types';
 
 // VS Code API
@@ -120,7 +119,11 @@ function renderSessionList(): void {
     return;
   }
 
-  for (const ws of allWorkspaces) {
+  const sortedWorkspaces = [...allWorkspaces].sort(
+    (a, b) => (b.sessions[0]?.lastMessageAt ?? 0) - (a.sessions[0]?.lastMessageAt ?? 0)
+  );
+
+  for (const ws of sortedWorkspaces) {
     const wsEl = makeEl('div', { className: 'workspace-group' });
     wsEl.appendChild(makeEl('div', { className: 'workspace-label', textContent: ws.displayName }));
     for (const session of ws.sessions) {
@@ -185,7 +188,8 @@ function autoSelectMostRecent(): void {
   for (const ws of allWorkspaces) {
     for (const s of ws.sessions) {
       if (!best || s.lastMessageAt > best.session.lastMessageAt) {
-        const el = sessionList.querySelector<HTMLElement>(`[data-session-id="${s.id}"]`);
+        const safeId = s.id.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        const el = sessionList.querySelector<HTMLElement>(`[data-session-id="${safeId}"]`);
         best = { session: s, el };
       }
     }

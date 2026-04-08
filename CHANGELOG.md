@@ -2,6 +2,27 @@
 
 All notable changes to AI Chat Exporter will be documented in this file.
 
+## [0.1.1] - 2026-04-08
+
+### Fixed
+- Session list now sorted by most recent activity first (workspaces ordered by newest session)
+- Support for new `.jsonl` session format introduced in GitHub Copilot Chat v0.42+
+- Sessions from the two-panel redesign: most recent session auto-selected and shown on load
+
+### Security
+- Nonce generation replaced with `crypto.randomBytes` (CSPRNG) instead of `Math.random()`
+- Removed `'unsafe-inline'` from webview CSP `style-src`
+- `marked` renderer now escapes raw HTML tokens to prevent prompt-injected markup in HTML exports
+- `esc()` helper extended to also escape single quotes (`&#x27;`)
+- `customColors` setting values validated against a strict CSS color regex before CSS interpolation
+- Session ID escaped before use in CSS attribute selectors (`querySelector`)
+
+### Stability
+- Malformed session files no longer abort loading of all remaining sessions (per-file isolation)
+- Webview `exportMd`/`exportHtml` messages validated for correct shape before processing
+- Response part `.value` type-checked before use; avoids literal `"undefined"` in exports
+- Export filename falls back to sanitized session ID when title reduces to empty string
+
 ## [0.1.0] - 2026-04-08
 
 ### Added

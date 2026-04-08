@@ -22,6 +22,8 @@ function configureMarked(): void {
     const langClass = lang ? ` language-${esc(lang)}` : '';
     return `<pre><code class="hljs${langClass}">${highlighted}</code></pre>`;
   };
+  // Escape raw HTML tokens so prompt-injected markup cannot execute in exports
+  renderer.html = (html: string) => esc(html);
   marked.use({ renderer });
 }
 
@@ -69,7 +71,14 @@ function resolveTheme(themeName: string): Theme {
   if (Object.keys(customColors).length === 0 || themeName !== 'custom') {
     return base;
   }
-  return { ...base, colors: { ...base.colors, ...customColors } };
+  // Validate each color value before interpolating into CSS
+  const validatedColors: Partial<ThemeColors> = {};
+  for (const [key, value] of Object.entries(customColors)) {
+    if (key in base.colors) {
+      (validatedColors as Record<string, string>)[key] = safeColor(value, base.colors[key as keyof ThemeColors]);
+    }
+  }
+  return { ...base, colors: { ...base.colors, ...validatedColors } };
 }
 
 interface SessionSlice {
@@ -314,5 +323,13 @@ function esc(s: string): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+// Only allow color values that match safe CSS color formats
+const COLOR_RE = /^(#[0-9a-fA-F]{3,8}|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\))$/;
+
+function safeColor(value: unknown, fallback: string): string {
+  return typeof value === 'string' && COLOR_RE.test(value.trim()) ? value.trim() : fallback;
 }

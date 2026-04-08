@@ -77,8 +77,10 @@ function makeFilename(session: ChatSession, ext: string): string {
   const safe = session.title
     .replace(/[<>:"/\\|?*\n\r]/g, '-')
     .replace(/\s+/g, '_')
-    .slice(0, 60);
-  return `${date}_${safe}.${ext}`;
+    .slice(0, 60)
+    .trim();
+  const name = safe || session.id.replace(/[^a-zA-Z0-9-]/g, '-').slice(0, 36) || 'session';
+  return `${date}_${name}.${ext}`;
 }
 
 function escapeMarkdown(text: string): string {
