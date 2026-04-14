@@ -6,13 +6,17 @@ A VS Code extension that lets you export your **GitHub Copilot Chat history** to
 
 ## Features
 
-- **Browse all chat sessions** in a dedicated sidebar panel, right inside VS Code
+- **Two-panel sidebar** — sessions list on the left, message preview on the right
+- **Current-workspace filter** — shows only the sessions for your active workspace by default; toggle **All WS** to see sessions from every workspace
+- **Empty-window sessions** — sessions created without an open workspace folder are included in the All WS view
 - **Select individual messages** per session for partial exports
-- **Toggle user/Copilot messages** to include or exclude each role from the export
+- **Toggle Prompt / Copilot messages** to include or exclude each role from the export
+- **Single-session Save As dialog** — when exporting one session, a file picker with a pre-filled filename opens; for multiple sessions, a folder picker is shown
 - **Export to Markdown** (`.md`) — clean, portable, paste-ready
 - **Export to HTML** (`.html`) — fully styled with syntax-highlighted code blocks
 - **10 built-in color themes** for HTML output: Catppuccin Mocha, GitHub Dark, Dracula, Nord, Tokyo Night, One Dark, Monokai Pro, Material Ocean, Solarized Dark, Light Classic
 - **Custom color profile** — configure all HTML colors individually via VS Code settings
+- **Internationalization** — UI and export content in English or German; follows VS Code's display language automatically, or set it manually
 - **Read-only access** — your Copilot chat data is never modified
 
 ## Installation
@@ -34,10 +38,13 @@ A VS Code extension that lets you export your **GitHub Copilot Chat history** to
 ## Usage
 
 1. Click the **AI Chat Exporter** icon in the Activity Bar (left sidebar)
-2. The panel shows all discovered GitHub Copilot chat sessions grouped by workspace
-3. Select the sessions you want to export using the checkboxes
-4. Optionally toggle the **You** / **Copilot** buttons to filter which message roles are included
-5. Click **Export MD** or **Export HTML** and choose a save location
+2. The left panel shows all GitHub Copilot chat sessions for the current workspace
+3. Click **All WS** to switch to a view showing sessions from all workspaces
+4. Click a session to preview its messages in the right panel
+5. Select sessions for export using the checkboxes; use **All** / **None** to select all or none
+6. Optionally toggle the **Prompt** / **Copilot** buttons to include or exclude each message role
+7. Choose an HTML theme from the dropdown, then click **Export MD** or **Export HTML**
+8. For a single session a Save As dialog opens with a pre-filled filename; for multiple sessions choose a target folder
 
 ## Settings
 
@@ -45,6 +52,7 @@ Open **File → Preferences → Settings** and search for `AI Chat Exporter` to 
 
 | Setting | Default | Description |
 |---|---|---|
+| `aiChatExporter.language` | `auto` | UI and export language: `auto` (follow VS Code), `en`, or `de` |
 | `aiChatExporter.defaultTheme` | `github-dark` | Color theme for HTML export |
 | `aiChatExporter.outputDirectory` | *(empty)* | Default export folder (empty = prompt each time) |
 | `aiChatExporter.includeMetadata` | `true` | Include session metadata (date, model, workspace) |
@@ -60,6 +68,8 @@ Open **File → Preferences → Settings** and search for `AI Chat Exporter` to 
 ## How It Works
 
 The extension reads GitHub Copilot Chat sessions from VS Code's local workspace storage (typically under `~/.config/Code/User/workspaceStorage` on Linux, `~/Library/Application Support/Code/User/workspaceStorage` on macOS, or `%APPDATA%\Code\User\workspaceStorage` on Windows). No network requests are made.
+
+The current workspace is identified via VS Code's own storage hash, ensuring an exact match with what Copilot Chat itself displays — no URI matching or path guessing required.
 
 ## Privacy
 

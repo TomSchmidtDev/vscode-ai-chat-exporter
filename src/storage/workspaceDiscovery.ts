@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { t } from '../i18n';
 
 export interface WorkspaceInfo {
   hash: string;
@@ -91,7 +92,7 @@ export async function loadEmptyWindowSessions(emptyWindowDir: string): Promise<W
     return {
       hash: '',
       folderUri: '',
-      displayName: 'No Workspace',
+      displayName: t('noWorkspace'),
       chatSessionFiles: files,
     };
   } catch {

@@ -2,6 +2,13 @@
 
 All notable changes to AI Chat Exporter will be documented in this file.
 
+## [0.3.0] - 2026-04-14
+
+### Added
+- **Internationalization (EN / DE)**: All UI labels, dialogs, status messages, and export content are now translated
+- Language follows VS Code's display language by default (`auto`)
+- New setting `aiChatExporter.language` (`auto` / `en` / `de`) to override the language manually
+
 ## [0.2.2] - 2026-04-14
 
 ### Fixed

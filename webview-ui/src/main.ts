@@ -7,6 +7,18 @@ declare function acquireVsCodeApi(): {
   setState(state: unknown): void;
 };
 
+// i18n — translations injected by the extension host at startup
+declare const __i18n: Record<string, string>;
+function t(key: string, params?: Record<string, string | number>): string {
+  let s = __i18n[key] ?? key;
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      s = s.replace(`{${k}}`, String(v));
+    }
+  }
+  return s;
+}
+
 const vscode = acquireVsCodeApi();
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -43,8 +55,8 @@ window.addEventListener('message', (event: MessageEvent) => {
   const msg = event.data as ExtensionToWebview;
   switch (msg.type) {
     case 'loading':
-      showStatus('Loading sessions…');
-      sessionList.replaceChildren(makeEl('div', { className: 'loading', textContent: 'Loading…' }));
+      showStatus(t('loading'));
+      sessionList.replaceChildren(makeEl('div', { className: 'loading', textContent: t('loadingShort') }));
       clearMessagePanel();
       break;
     case 'sessions':
@@ -53,17 +65,17 @@ window.addEventListener('message', (event: MessageEvent) => {
       selectedMessages.clear();
       activeSessionId = null;
       if (workspaceScopeEl) {
-        workspaceScopeEl.textContent = msg.allWorkspaces ? 'All workspaces' : 'Current workspace';
+        workspaceScopeEl.textContent = msg.allWorkspaces ? t('scopeAll') : t('scopeCurrent');
       }
       renderSessionList();
       autoSelectMostRecent();
-      showStatus(`${countSessions()} session(s) loaded`);
+      showStatus(t('sessionsLoaded', { count: countSessions() }));
       break;
     case 'exportDone':
-      showStatus(`✓ Exported ${msg.count} file(s) to ${msg.path}`);
+      showStatus(t('exportedFiles', { count: msg.count, path: msg.path }));
       break;
     case 'error':
-      showStatus(`⚠ ${msg.message}`);
+      showStatus(t('errorPrefix', { message: msg.message }));
       sessionList.replaceChildren(makeEl('div', { className: 'error-msg', textContent: msg.message }));
       break;
     // preview type no longer used in two-panel layout
@@ -76,13 +88,13 @@ refreshBtn.addEventListener('click', () => post({ type: 'refresh', allWorkspaces
 
 exportMdBtn.addEventListener('click', () => {
   const sessionIds = Array.from(selectedSessions);
-  if (sessionIds.length === 0) { showStatus('Select at least one session to export.'); return; }
+  if (sessionIds.length === 0) { showStatus(t('selectToExport')); return; }
   post({ type: 'exportMd', sessionIds, messageFilters: buildMessageFilters(sessionIds) });
 });
 
 exportHtmlBtn.addEventListener('click', () => {
   const sessionIds = Array.from(selectedSessions);
-  if (sessionIds.length === 0) { showStatus('Select at least one session to export.'); return; }
+  if (sessionIds.length === 0) { showStatus(t('selectToExport')); return; }
   post({ type: 'exportHtml', sessionIds, messageFilters: buildMessageFilters(sessionIds), theme: themeSelect.value });
 });
 
@@ -126,7 +138,7 @@ function renderSessionList(): void {
   sessionList.replaceChildren();
 
   if (allWorkspaces.length === 0) {
-    sessionList.appendChild(makeEl('div', { className: 'empty-msg', textContent: 'No Copilot Chat sessions found.' }));
+    sessionList.appendChild(makeEl('div', { className: 'empty-msg', textContent: t('noSessions') }));
     return;
   }
 
@@ -168,7 +180,7 @@ function buildSessionItem(session: ChatSession): HTMLElement {
   const metaRow = makeEl('div', { className: 'session-meta-row' });
   metaRow.appendChild(makeEl('span', { className: 'session-date', textContent: new Date(session.createdAt).toLocaleDateString() }));
   const msgCount = session.messages.length;
-  metaRow.appendChild(makeEl('span', { className: 'session-count', textContent: `${msgCount} msg${msgCount !== 1 ? 's' : ''}` }));
+  metaRow.appendChild(makeEl('span', { className: 'session-count', textContent: `${msgCount} ${msgCount !== 1 ? t('msgsSuffix') : t('msgSuffix')}` }));
   metaRow.appendChild(makeEl('span', { className: 'session-mode tag', textContent: session.mode }));
   el.appendChild(metaRow);
 
@@ -258,14 +270,14 @@ function buildMessageItem(msg: ChatMessage, msgSet: Set<string>): HTMLElement {
   });
 
   label.appendChild(cb);
-  label.appendChild(makeEl('span', { className: 'msg-role', textContent: msg.role === 'user' ? 'You' : 'Copilot' }));
+  label.appendChild(makeEl('span', { className: 'msg-role', textContent: msg.role === 'user' ? t('roleYou') : t('roleCopilot') }));
   label.appendChild(makeEl('span', { className: 'msg-preview', textContent: truncate(msg.text.replace(/\n/g, ' '), 80) }));
 
   return label;
 }
 
 function clearMessagePanel(): void {
-  messagePanelTitle.textContent = 'Select a session';
+  messagePanelTitle.textContent = t('selectSession');
   messagePanelCount.textContent = '';
   messageListView.replaceChildren();
 }

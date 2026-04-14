@@ -1,0 +1,7 @@
+{
+  "config.customColors.description": "Themefarben für das benutzerdefinierte Theme überschreiben. Schlüssel: background, surface, userBubble, assistantBubble, userText, assistantText, accent, border, codeBackground, codeText, timestamp, headerBackground",
+  "config.language.description": "Sprache für Oberfläche und Exportausgaben (auto = VS Code Anzeigesprache verwenden)",
+  "config.language.auto": "VS Code-Anzeigesprache verwenden",
+  "config.language.en": "English",
+  "config.language.de": "Deutsch"
+}

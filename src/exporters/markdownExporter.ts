@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { ChatSession } from '../types';
+import { t } from '../i18n';
 
 export class MarkdownExporter {
   /**
@@ -42,10 +43,10 @@ function renderSession(session: ChatSession, selectedIds?: string[]): string {
   lines.push('');
 
   if (includeMetadata) {
-    lines.push(`**Workspace**: ${session.workspaceDisplayName}  `);
-    lines.push(`**Date**: ${new Date(session.createdAt).toLocaleString()}  `);
-    lines.push(`**Mode**: ${session.mode}  `);
-    lines.push(`**Model**: ${session.modelName}  `);
+    lines.push(`**${t('metaWorkspace')}**: ${session.workspaceDisplayName}  `);
+    lines.push(`**${t('metaDate')}**: ${new Date(session.createdAt).toLocaleString()}  `);
+    lines.push(`**${t('metaMode')}**: ${session.mode}  `);
+    lines.push(`**${t('metaModel')}**: ${session.modelName}  `);
     lines.push('');
   }
 
@@ -54,14 +55,14 @@ function renderSession(session: ChatSession, selectedIds?: string[]): string {
 
   for (const msg of messages) {
     if (msg.role === 'user') {
-      lines.push('## You');
+      lines.push(`## ${t('headerYou')}`);
       if (msg.agentName || msg.slashCommand) {
         lines.push(`> *${[msg.agentName, msg.slashCommand].filter(Boolean).join(' ')}*`);
         lines.push('');
       }
       lines.push(msg.text);
     } else {
-      lines.push('## GitHub Copilot');
+      lines.push(`## ${t('headerCopilot')}`);
       if (msg.timestamp) {
         lines.push(`*${new Date(msg.timestamp).toLocaleTimeString()}*`);
         lines.push('');

@@ -7,6 +7,7 @@ import { discoverAllWorkspaces, loadWorkspaceFromHashDir, loadEmptyWindowSession
 import { readSessionFile, normalizeSession } from '../storage/sessionReader';
 import { MarkdownExporter, makeFilename } from '../exporters/markdownExporter';
 import { HtmlExporter } from '../exporters/htmlExporter';
+import { t, getWebviewTranslations } from '../i18n';
 
 export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewId = 'aiChatExporter.mainView';
@@ -168,7 +169,7 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
   ): Promise<void> {
     const sessions = this._resolveSessions(sessionIds);
     if (sessions.length === 0) {
-      vscode.window.showWarningMessage('No sessions selected for export.');
+      vscode.window.showWarningMessage(t('noSessionsSelected'));
       return;
     }
 
@@ -181,16 +182,16 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
       if (exported.length > 0) {
         this._post({ type: 'exportDone', path: path.dirname(exported[0]), count: exported.length });
         const open = await vscode.window.showInformationMessage(
-          `Exported ${exported.length} session(s) to Markdown.`,
-          'Open Folder'
+          t('exportedMd', { count: exported.length }),
+          t('openFolder')
         );
-        if (open === 'Open Folder') {
+        if (open === t('openFolder')) {
           vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(path.dirname(exported[0])));
         }
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      vscode.window.showErrorMessage(`Export failed: ${message}`);
+      vscode.window.showErrorMessage(t('exportFailed', { message }));
     }
   }
 
@@ -201,7 +202,7 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
   ): Promise<void> {
     const sessions = this._resolveSessions(sessionIds);
     if (sessions.length === 0) {
-      vscode.window.showWarningMessage('No sessions selected for export.');
+      vscode.window.showWarningMessage(t('noSessionsSelected'));
       return;
     }
 
@@ -214,16 +215,16 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
       if (exported.length > 0) {
         this._post({ type: 'exportDone', path: path.dirname(exported[0]), count: exported.length });
         const open = await vscode.window.showInformationMessage(
-          `Exported ${exported.length} session(s) to HTML.`,
-          'Open Folder'
+          t('exportedHtml', { count: exported.length }),
+          t('openFolder')
         );
-        if (open === 'Open Folder') {
+        if (open === t('openFolder')) {
           vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(path.dirname(exported[0])));
         }
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      vscode.window.showErrorMessage(`Export failed: ${message}`);
+      vscode.window.showErrorMessage(t('exportFailed', { message }));
     }
   }
 
@@ -249,7 +250,7 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
         filters: ext === 'md'
           ? { 'Markdown': ['md'] }
           : { 'HTML': ['html'] },
-        saveLabel: 'Export',
+        saveLabel: t('exportLabel'),
       });
       return uri?.fsPath;
     }
@@ -258,7 +259,7 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
       canSelectFiles: false,
       canSelectFolders: true,
       canSelectMany: false,
-      openLabel: 'Select Export Folder',
+      openLabel: t('selectFolder'),
     });
     return chosen?.[0]?.fsPath;
   }
@@ -281,6 +282,7 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
       vscode.Uri.joinPath(this.context.extensionUri, 'media', 'main.css')
     );
     const nonce = generateNonce();
+    const i18nJson = JSON.stringify(getWebviewTranslations());
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -295,10 +297,10 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
 <body>
 <div id="root">
   <div id="toolbar">
-    <button id="btn-refresh" class="secondary" title="Refresh sessions">&#8635; Refresh</button>
-    <button id="btn-export-md" title="Export selected sessions to Markdown">Export MD</button>
-    <button id="btn-export-html" title="Export selected sessions to HTML">Export HTML</button>
-    <select id="theme-select" title="HTML export theme">
+    <button id="btn-refresh" class="secondary" title="${t('btnRefreshTitle')}">${t('btnRefresh')}</button>
+    <button id="btn-export-md" title="${t('btnExportMdTitle')}">${t('btnExportMd')}</button>
+    <button id="btn-export-html" title="${t('btnExportHtmlTitle')}">${t('btnExportHtml')}</button>
+    <select id="theme-select" title="${t('themeSelectTitle')}">
       <option value="github-dark">GitHub Dark</option>
       <option value="catppuccin-mocha">Catppuccin Mocha</option>
       <option value="dracula">Dracula</option>
@@ -311,30 +313,31 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
       <option value="light-classic">Light Classic</option>
       <option value="custom">Custom</option>
     </select>
-    <button id="btn-settings" class="secondary" title="Open settings">&#9881;</button>
+    <button id="btn-settings" class="secondary" title="${t('btnSettingsTitle')}">${t('btnSettings')}</button>
   </div>
   <div id="main">
     <div id="session-panel">
       <div id="session-actions">
-        <button id="btn-select-all" class="secondary">All</button>
-        <button id="btn-select-none" class="secondary">None</button>
-        <button id="btn-toggle-user" class="toggle active" title="Check/uncheck all your messages">You</button>
-        <button id="btn-toggle-copilot" class="toggle active" title="Check/uncheck all Copilot messages">Copilot</button>
-        <button id="btn-show-all" class="toggle" title="Show sessions from all workspaces">All WS</button>
+        <button id="btn-select-all" class="secondary">${t('btnAll')}</button>
+        <button id="btn-select-none" class="secondary">${t('btnNone')}</button>
+        <button id="btn-toggle-user" class="toggle active" title="${t('btnToggleUserTitle')}">${t('btnToggleUser')}</button>
+        <button id="btn-toggle-copilot" class="toggle active" title="${t('btnToggleCopilotTitle')}">${t('btnToggleCopilot')}</button>
+        <button id="btn-show-all" class="toggle" title="${t('btnShowAllTitle')}">${t('btnAllWs')}</button>
       </div>
       <div id="workspace-scope" class="scope-badge"></div>
-      <div id="session-list"><div class="loading">Loading&#8230;</div></div>
+      <div id="session-list"><div class="loading">${t('loadingShort')}</div></div>
     </div>
     <div id="message-panel">
       <div id="message-panel-header">
-        <span id="message-panel-title">Select a session</span>
+        <span id="message-panel-title">${t('selectSession')}</span>
         <span id="message-panel-count"></span>
       </div>
       <div id="message-list-view"></div>
     </div>
   </div>
-  <div id="status-bar">Ready</div>
+  <div id="status-bar">${t('ready')}</div>
 </div>
+<script nonce="${nonce}">window.__i18n = ${i18nJson};</script>
 <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>
 </html>`;

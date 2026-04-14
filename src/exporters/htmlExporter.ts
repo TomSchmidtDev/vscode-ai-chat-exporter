@@ -6,6 +6,7 @@ import hljs from 'highlight.js';
 import { ChatSession, ChatMessage, Theme, ThemeColors } from '../types';
 import { THEMES } from '../themes/themes';
 import { makeFilename } from './markdownExporter';
+import { t } from '../i18n';
 
 // Import highlight.js CSS as text (inlined by esbuild loader:.css=text)
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -102,7 +103,7 @@ function buildPage(slices: SessionSlice[], theme: Theme): string {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Copilot Chat Export</title>
+<title>${t('htmlPageTitle')}</title>
 <style>
 ${hljsCss}
 :root {
@@ -279,10 +280,10 @@ function renderSessionHtml(session: ChatSession, messages: ChatMessage[]): strin
 
   const metaHtml = includeMetadata ? `
     <div class="session-meta">
-      <span>${esc(session.workspaceDisplayName)}</span>
-      <span>${new Date(session.createdAt).toLocaleDateString()}</span>
-      <span>${esc(session.mode)}</span>
-      <span>${esc(session.modelName)}</span>
+      <span>${esc(t('metaWorkspace'))}: ${esc(session.workspaceDisplayName)}</span>
+      <span>${esc(t('metaDate'))}: ${new Date(session.createdAt).toLocaleDateString()}</span>
+      <span>${esc(t('metaMode'))}: ${esc(session.mode)}</span>
+      <span>${esc(t('metaModel'))}: ${esc(session.modelName)}</span>
     </div>` : '';
 
   const msgsHtml = messages.map(renderMessageHtml).join('\n');
@@ -297,7 +298,7 @@ function renderSessionHtml(session: ChatSession, messages: ChatMessage[]): strin
 
 function renderMessageHtml(msg: ChatMessage): string {
   const role = msg.role === 'user' ? 'user' : 'assistant';
-  const label = msg.role === 'user' ? 'You' : 'GitHub Copilot';
+  const label = msg.role === 'user' ? t('headerYou') : t('headerCopilot');
 
   const badgeParts: string[] = [];
   if (msg.agentName) {

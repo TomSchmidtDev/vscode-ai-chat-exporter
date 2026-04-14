@@ -2,7 +2,7 @@
   "name": "vscode-ai-chat-exporter",
   "displayName": "AI Chat Exporter",
   "description": "Export GitHub Copilot Chat history to Markdown and HTML",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "publisher": "TomSchmidtDev",
   "license": "SEE LICENSE IN LICENSE.md",
   "repository": {
@@ -131,7 +131,18 @@
         "aiChatExporter.customColors": {
           "type": "object",
           "default": {},
-          "description": "Override theme colors for custom theme. Keys: background, surface, userBubble, assistantBubble, userText, assistantText, accent, border, codeBackground, codeText, timestamp, headerBackground"
+          "description": "%config.customColors.description%"
+        },
+        "aiChatExporter.language": {
+          "type": "string",
+          "default": "auto",
+          "enum": ["auto", "en", "de"],
+          "enumDescriptions": [
+            "%config.language.auto%",
+            "%config.language.en%",
+            "%config.language.de%"
+          ],
+          "description": "%config.language.description%"
         }
       }
     }

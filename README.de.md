@@ -6,13 +6,17 @@ Eine VS Code-Extension, mit der du deine **GitHub Copilot-Chatverläufe** direkt
 
 ## Funktionen
 
-- **Alle Chat-Sitzungen durchsuchen** in einem dedizierten Seitenbereich direkt in VS Code
+- **Zweispaltiges Seitenbereich-Layout** — Sitzungsliste links, Nachrichtenvorschau rechts
+- **Aktueller-Workspace-Filter** — zeigt standardmäßig nur Sitzungen des aktiven Workspaces; **Alle WS** umschalten, um Sitzungen aller Workspaces anzuzeigen
+- **Sitzungen ohne Workspace** — Sitzungen, die ohne geöffneten Workspace-Ordner erstellt wurden, sind in der Alle-WS-Ansicht enthalten
 - **Einzelne Nachrichten auswählen** pro Sitzung für teilweise Exporte
-- **Benutzer-/Copilot-Nachrichten ein-/ausblenden** mit Toggle-Buttons, um einzelne Rollen vom Export auszuschließen
+- **Prompt- / Copilot-Nachrichten ein-/ausblenden** mit Toggle-Buttons, um einzelne Rollen vom Export auszuschließen
+- **Speichern-unter-Dialog bei Einzelsitzungen** — beim Export einer einzelnen Sitzung öffnet sich ein Datei-Picker mit vorausgefülltem Dateinamen; bei mehreren Sitzungen wird ein Ordner-Picker angezeigt
 - **Export als Markdown** (`.md`) — sauber, portabel, direkt einfügbar
 - **Export als HTML** (`.html`) — vollständig gestylt mit Syntax-Highlighting für Codeblöcke
 - **10 eingebaute Farbthemen** für die HTML-Ausgabe: Catppuccin Mocha, GitHub Dark, Dracula, Nord, Tokyo Night, One Dark, Monokai Pro, Material Ocean, Solarized Dark, Light Classic
 - **Eigenes Farbprofil** — alle HTML-Farben individuell über die VS Code-Einstellungen konfigurierbar
+- **Mehrsprachigkeit** — Oberfläche und Exportausgaben auf Englisch oder Deutsch; folgt automatisch der VS Code-Anzeigesprache oder kann manuell eingestellt werden
 - **Nur-Lesen-Zugriff** — deine Copilot-Chatdaten werden niemals verändert
 
 ## Installation
@@ -34,10 +38,13 @@ Eine VS Code-Extension, mit der du deine **GitHub Copilot-Chatverläufe** direkt
 ## Verwendung
 
 1. Klicke auf das **AI Chat Exporter**-Symbol in der Aktivitätsleiste (linke Seitenleiste)
-2. Das Panel zeigt alle gefundenen GitHub Copilot-Chat-Sitzungen, gruppiert nach Workspace
-3. Wähle die gewünschten Sitzungen über die Checkboxen aus
-4. Blende optional mit den **You**- / **Copilot**-Buttons einzelne Nachrichtenrollen ein oder aus
-5. Klicke auf **Export MD** oder **Export HTML** und wähle einen Speicherort
+2. Das linke Panel zeigt alle GitHub Copilot-Chat-Sitzungen des aktuellen Workspaces
+3. Klicke auf **Alle WS**, um Sitzungen aller Workspaces anzuzeigen
+4. Klicke auf eine Sitzung, um ihre Nachrichten im rechten Panel zu sehen
+5. Wähle Sitzungen über die Checkboxen aus; **Alle** / **Keine** markiert oder demarkiert alle
+6. Blende optional mit den **Prompt**- / **Copilot**-Buttons einzelne Nachrichtenrollen ein oder aus
+7. Wähle ein HTML-Theme aus dem Dropdown und klicke auf **MD exportieren** oder **HTML exportieren**
+8. Bei einer einzelnen Sitzung öffnet sich ein Speichern-unter-Dialog mit vorausgefülltem Dateinamen; bei mehreren Sitzungen wird ein Zielordner gewählt
 
 ## Einstellungen
 
@@ -45,6 +52,7 @@ Eine VS Code-Extension, mit der du deine **GitHub Copilot-Chatverläufe** direkt
 
 | Einstellung | Standard | Beschreibung |
 |---|---|---|
+| `aiChatExporter.language` | `auto` | Sprache für Oberfläche und Export: `auto` (VS Code folgen), `en` oder `de` |
 | `aiChatExporter.defaultTheme` | `github-dark` | Farbthema für den HTML-Export |
 | `aiChatExporter.outputDirectory` | *(leer)* | Standard-Exportordner (leer = jedes Mal nachfragen) |
 | `aiChatExporter.includeMetadata` | `true` | Sitzungs-Metadaten (Datum, Modell, Workspace) einschließen |
@@ -60,6 +68,8 @@ Eine VS Code-Extension, mit der du deine **GitHub Copilot-Chatverläufe** direkt
 ## Funktionsweise
 
 Die Extension liest GitHub Copilot-Chat-Sitzungen aus dem lokalen Workspace-Speicher von VS Code (typischerweise unter `~/.config/Code/User/workspaceStorage` unter Linux, `~/Library/Application Support/Code/User/workspaceStorage` unter macOS oder `%APPDATA%\Code\User\workspaceStorage` unter Windows). Es werden keine Netzwerkanfragen gestellt.
+
+Der aktuelle Workspace wird über VS Codes eigenen Speicher-Hash identifiziert — so stimmt die Anzeige exakt mit dem überein, was Copilot Chat selbst zeigt, ohne URI-Vergleiche oder Pfadschätzungen.
 
 ## Datenschutz
 
