@@ -16,13 +16,17 @@ export async function readSessionFile(filePath: string): Promise<RawChatSession 
 }
 
 /**
- * .jsonl format: one JSON object per line.
- * Each line has { kind: number, v: RawChatSession }.
- * kind=0 carries the full session snapshot; take the last one to get the
- * most current state.
+ * .jsonl format: one JSON object per line, three entry kinds:
+ *   kind=0  { v: RawChatSession }         — base snapshot (requests always [])
+ *   kind=1  { k: string[], v: unknown }   — scalar field patch  (set nested key)
+ *   kind=2  { k: string[], v: unknown }   — array/value replace (set nested key)
+ *
+ * kind=1 and kind=2 use identical patch semantics: walk the key path and set
+ * the leaf.  The LAST kind=2 entry for key ["requests"] holds the complete
+ * conversation history.
  */
 function parseJsonlSession(content: string): RawChatSession | null {
-  let session: RawChatSession | null = null;
+  let session: Record<string, unknown> | null = null;
 
   for (const line of content.split('\n')) {
     const trimmed = line.trim();
@@ -30,16 +34,35 @@ function parseJsonlSession(content: string): RawChatSession | null {
       continue;
     }
     try {
-      const obj = JSON.parse(trimmed) as { kind?: number; v?: RawChatSession };
-      if (obj.kind === 0 && obj.v) {
-        session = obj.v;
+      const obj = JSON.parse(trimmed) as { kind?: number; k?: string[]; v?: unknown };
+      if (obj.kind === 0 && obj.v && typeof obj.v === 'object') {
+        // Clone the base snapshot so patches don't mutate the parsed object
+        session = { ...(obj.v as Record<string, unknown>) };
+      } else if ((obj.kind === 1 || obj.kind === 2) && session && Array.isArray(obj.k) && obj.k.length > 0) {
+        applyJsonlPatch(session, obj.k, obj.v);
       }
     } catch {
       // skip malformed lines
     }
   }
 
-  return session;
+  return session as RawChatSession | null;
+}
+
+/**
+ * Sets a value at the nested path described by `keys` inside `target`.
+ * Intermediate objects are created if missing.
+ */
+function applyJsonlPatch(target: Record<string, unknown>, keys: string[], value: unknown): void {
+  let node: Record<string, unknown> = target;
+  for (let i = 0; i < keys.length - 1; i++) {
+    const key = keys[i];
+    if (node[key] == null || typeof node[key] !== 'object') {
+      node[key] = {};
+    }
+    node = node[key] as Record<string, unknown>;
+  }
+  node[keys[keys.length - 1]] = value;
 }
 
 export function normalizeSession(

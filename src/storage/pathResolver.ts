@@ -24,6 +24,10 @@ export function getWorkspaceStorageBase(): string {
   return path.join(getVSCodeStorageBase(), 'workspaceStorage');
 }
 
+export function getEmptyWindowChatSessionsDir(): string {
+  return path.join(getVSCodeStorageBase(), 'globalStorage', 'emptyWindowChatSessions');
+}
+
 export function getInsidersStorageBase(): string | null {
   switch (process.platform) {
     case 'darwin':

@@ -2,6 +2,12 @@
 
 All notable changes to AI Chat Exporter will be documented in this file.
 
+## [0.2.1] - 2026-04-14
+
+### Fixed
+- **Missing messages**: JSONL session files use an incremental patch format (`kind=1`/`kind=2` entries) that was silently ignored — the parser now applies all patches on top of the base `kind=0` snapshot, so all conversation messages are correctly loaded
+- **Empty-window sessions**: Sessions created in VS Code windows without an open workspace are now included in the "All Workspaces" view (loaded from `globalStorage/emptyWindowChatSessions/`)
+
 ## [0.2.0] - 2026-04-14
 
 ### Added

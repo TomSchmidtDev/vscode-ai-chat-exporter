@@ -72,6 +72,33 @@ async function findChatSessionFiles(hashDir: string): Promise<string[]> {
   }
 }
 
+/**
+ * Loads sessions from globalStorage/emptyWindowChatSessions — sessions
+ * created in VS Code windows opened without a workspace folder.
+ * Returns null if the directory is missing or empty.
+ */
+export async function loadEmptyWindowSessions(emptyWindowDir: string): Promise<WorkspaceInfo | null> {
+  try {
+    const entries = await fs.promises.readdir(emptyWindowDir);
+    const files = entries
+      .filter(f => f.endsWith('.json') || f.endsWith('.jsonl'))
+      .map(f => path.join(emptyWindowDir, f));
+
+    if (files.length === 0) {
+      return null;
+    }
+
+    return {
+      hash: '',
+      folderUri: '',
+      displayName: 'No Workspace',
+      chatSessionFiles: files,
+    };
+  } catch {
+    return null;
+  }
+}
+
 function deriveName(folderUri: string, hash: string): string {
   if (!folderUri) {
     return hash.slice(0, 8);

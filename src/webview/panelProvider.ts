@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { randomBytes } from 'crypto';
 import { ExtensionToWebview, WebviewToExtension, ChatSession, ChatWorkspace } from '../types';
-import { getWorkspaceStorageBase } from '../storage/pathResolver';
-import { discoverAllWorkspaces, loadWorkspaceFromHashDir } from '../storage/workspaceDiscovery';
+import { getWorkspaceStorageBase, getEmptyWindowChatSessionsDir } from '../storage/pathResolver';
+import { discoverAllWorkspaces, loadWorkspaceFromHashDir, loadEmptyWindowSessions } from '../storage/workspaceDiscovery';
 import { readSessionFile, normalizeSession } from '../storage/sessionReader';
 import { MarkdownExporter } from '../exporters/markdownExporter';
 import { HtmlExporter } from '../exporters/htmlExporter';
@@ -102,9 +102,13 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
         const info = await loadWorkspaceFromHashDir(currentHashDir!);
         workspaceInfos = info ? [info] : [];
       } else {
-        // Fallback: scan all workspace hash directories
+        // Fallback: scan all workspace hash directories + empty-window sessions
         const storageBase = getWorkspaceStorageBase();
         workspaceInfos = await discoverAllWorkspaces(storageBase);
+        const emptyWin = await loadEmptyWindowSessions(getEmptyWindowChatSessionsDir());
+        if (emptyWin) {
+          workspaceInfos = [...workspaceInfos, emptyWin];
+        }
       }
 
       const chatWorkspaces: ChatWorkspace[] = [];
