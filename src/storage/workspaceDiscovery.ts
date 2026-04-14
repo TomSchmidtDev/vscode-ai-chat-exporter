@@ -24,24 +24,30 @@ export async function discoverAllWorkspaces(storageBase: string): Promise<Worksp
     }
 
     const hashDir = path.join(storageBase, entry.name);
-    const folderUri = await parseFolderUri(hashDir);
-    const chatSessionFiles = await findChatSessionFiles(hashDir);
-
-    if (chatSessionFiles.length === 0) {
-      continue;
+    const info = await loadWorkspaceFromHashDir(hashDir);
+    if (info) {
+      results.push(info);
     }
-
-    const displayName = deriveName(folderUri, entry.name);
-
-    results.push({
-      hash: entry.name,
-      folderUri,
-      displayName,
-      chatSessionFiles,
-    });
   }
 
   return results.sort((a, b) => a.displayName.localeCompare(b.displayName));
+}
+
+/**
+ * Loads workspace info from a single hash directory.
+ * Returns null if the directory has no chat session files.
+ */
+export async function loadWorkspaceFromHashDir(hashDir: string): Promise<WorkspaceInfo | null> {
+  const chatSessionFiles = await findChatSessionFiles(hashDir);
+  if (chatSessionFiles.length === 0) {
+    return null;
+  }
+
+  const folderUri = await parseFolderUri(hashDir);
+  const hash = path.basename(hashDir);
+  const displayName = deriveName(folderUri, hash);
+
+  return { hash, folderUri, displayName, chatSessionFiles };
 }
 
 async function parseFolderUri(hashDir: string): Promise<string> {

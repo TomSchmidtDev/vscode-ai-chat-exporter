@@ -3,7 +3,7 @@ import * as path from 'path';
 import { randomBytes } from 'crypto';
 import { ExtensionToWebview, WebviewToExtension, ChatSession, ChatWorkspace } from '../types';
 import { getWorkspaceStorageBase } from '../storage/pathResolver';
-import { discoverAllWorkspaces } from '../storage/workspaceDiscovery';
+import { discoverAllWorkspaces, loadWorkspaceFromHashDir } from '../storage/workspaceDiscovery';
 import { readSessionFile, normalizeSession } from '../storage/sessionReader';
 import { MarkdownExporter } from '../exporters/markdownExporter';
 import { HtmlExporter } from '../exporters/htmlExporter';
@@ -13,6 +13,7 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
 
   private _view?: vscode.WebviewView;
   private _sessions: Map<string, ChatSession> = new Map();
+  private _showAllWorkspaces = false;
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -50,6 +51,9 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
         await this._loadSessions();
         break;
       case 'refresh':
+        if (typeof msg.allWorkspaces === 'boolean') {
+          this._showAllWorkspaces = msg.allWorkspaces;
+        }
         await this._loadSessions();
         break;
       case 'preview':
@@ -69,16 +73,43 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
+  /**
+   * Returns the workspaceStorage/<hash> directory for the current workspace
+   * by reading it from context.storageUri (the extension's own workspace storage path).
+   * This is the same hash Copilot Chat uses — no URI matching needed.
+   */
+  private _getCurrentHashDir(): string | undefined {
+    const storageUri = this.context.storageUri;
+    if (!storageUri) {
+      return undefined;
+    }
+    // storageUri.fsPath = .../workspaceStorage/<hash>/vscode-ai-chat-exporter
+    // parent              = .../workspaceStorage/<hash>
+    return path.dirname(storageUri.fsPath);
+  }
+
   private async _loadSessions(): Promise<void> {
     this._post({ type: 'loading' });
     this._sessions.clear();
 
     try {
-      const storageBase = getWorkspaceStorageBase();
-      const workspaces = await discoverAllWorkspaces(storageBase);
+      const currentHashDir = this._getCurrentHashDir();
+      const hasCurrentWorkspace = !!currentHashDir && !this._showAllWorkspaces;
+
+      let workspaceInfos;
+      if (hasCurrentWorkspace) {
+        // Fast path: load only the current workspace's hash directory
+        const info = await loadWorkspaceFromHashDir(currentHashDir!);
+        workspaceInfos = info ? [info] : [];
+      } else {
+        // Fallback: scan all workspace hash directories
+        const storageBase = getWorkspaceStorageBase();
+        workspaceInfos = await discoverAllWorkspaces(storageBase);
+      }
+
       const chatWorkspaces: ChatWorkspace[] = [];
 
-      for (const ws of workspaces) {
+      for (const ws of workspaceInfos) {
         const sessions: ChatSession[] = [];
 
         for (const file of ws.chatSessionFiles) {
@@ -106,7 +137,11 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
         }
       }
 
-      this._post({ type: 'sessions', data: chatWorkspaces });
+      this._post({
+        type: 'sessions',
+        data: chatWorkspaces,
+        allWorkspaces: !hasCurrentWorkspace,
+      });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       this._post({ type: 'error', message });
@@ -239,7 +274,9 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
         <button id="btn-select-none" class="secondary">None</button>
         <button id="btn-toggle-user" class="toggle active" title="Check/uncheck all your messages">You</button>
         <button id="btn-toggle-copilot" class="toggle active" title="Check/uncheck all Copilot messages">Copilot</button>
+        <button id="btn-show-all" class="toggle" title="Show sessions from all workspaces">All WS</button>
       </div>
+      <div id="workspace-scope" class="scope-badge"></div>
       <div id="session-list"><div class="loading">Loading&#8230;</div></div>
     </div>
     <div id="message-panel">

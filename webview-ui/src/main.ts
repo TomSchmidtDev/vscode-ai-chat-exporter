@@ -19,6 +19,8 @@ let activeSessionId: string | null = null;
 // Toggle state: tracks whether You/Copilot messages are globally included
 let showUser = true;
 let showAssistant = true;
+// Whether "show all workspaces" mode is active
+let showAllWorkspaces = false;
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
 
@@ -35,6 +37,8 @@ const selectAllBtn     = document.getElementById('btn-select-all')!;
 const selectNoneBtn    = document.getElementById('btn-select-none')!;
 const toggleUserBtn    = document.getElementById('btn-toggle-user')!;
 const toggleCopilotBtn = document.getElementById('btn-toggle-copilot')!;
+const showAllBtn       = document.getElementById('btn-show-all')!;
+const workspaceScopeEl = document.getElementById('workspace-scope');
 
 // ─── Message handling ─────────────────────────────────────────────────────────
 
@@ -51,6 +55,9 @@ window.addEventListener('message', (event: MessageEvent) => {
       selectedSessions.clear();
       selectedMessages.clear();
       activeSessionId = null;
+      if (workspaceScopeEl) {
+        workspaceScopeEl.textContent = msg.allWorkspaces ? 'All workspaces' : 'Current workspace';
+      }
       renderSessionList();
       autoSelectMostRecent();
       showStatus(`${countSessions()} session(s) loaded`);
@@ -68,7 +75,7 @@ window.addEventListener('message', (event: MessageEvent) => {
 
 // ─── Button handlers ──────────────────────────────────────────────────────────
 
-refreshBtn.addEventListener('click', () => post({ type: 'refresh' }));
+refreshBtn.addEventListener('click', () => post({ type: 'refresh', allWorkspaces: showAllWorkspaces }));
 
 exportMdBtn.addEventListener('click', () => {
   const sessionIds = Array.from(selectedSessions);
@@ -107,6 +114,13 @@ toggleCopilotBtn.addEventListener('click', () => {
   showAssistant = !showAssistant;
   toggleCopilotBtn.classList.toggle('active', showAssistant);
   applyRoleToggle('assistant', showAssistant);
+});
+
+// Toggle between current workspace and all workspaces
+showAllBtn.addEventListener('click', () => {
+  showAllWorkspaces = !showAllWorkspaces;
+  showAllBtn.classList.toggle('active', showAllWorkspaces);
+  post({ type: 'refresh', allWorkspaces: showAllWorkspaces });
 });
 
 // ─── Session rendering ────────────────────────────────────────────────────────

@@ -2,6 +2,17 @@
 
 All notable changes to AI Chat Exporter will be documented in this file.
 
+## [0.2.0] - 2026-04-14
+
+### Added
+- Session list now shows only the **current workspace** by default, matching exactly what Copilot Chat displays
+- New **"All WS"** toggle button to switch between current-workspace and all-workspaces view
+- Scope badge below session actions bar indicates active filter ("Current workspace" / "All workspaces")
+
+### Changed
+- Workspace detection now uses `ExtensionContext.storageUri` (same hash VS Code and Copilot Chat use internally) instead of URI path matching — eliminates mismatches caused by encoding, case, or symlinks
+- `loadWorkspaceFromHashDir()` extracted as a reusable function for both single- and all-workspace loading
+
 ## [0.1.1] - 2026-04-08
 
 ### Fixed

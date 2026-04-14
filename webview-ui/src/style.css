@@ -59,6 +59,17 @@ body {
   flex-shrink: 0;
 }
 
+.scope-badge {
+  padding: 2px 10px;
+  font-size: 0.72em;
+  color: var(--vscode-descriptionForeground);
+  background: var(--vscode-sideBar-background);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  flex-shrink: 0;
+}
+
+.scope-badge:empty { display: none; }
+
 #session-list {
   flex: 1;
   overflow-y: auto;
