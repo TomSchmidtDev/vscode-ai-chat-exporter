@@ -17,13 +17,17 @@ export async function readSessionFile(filePath: string): Promise<RawChatSession 
 
 /**
  * .jsonl format: one JSON object per line, three entry kinds:
- *   kind=0  { v: RawChatSession }         — base snapshot (requests always [])
- *   kind=1  { k: string[], v: unknown }   — scalar field patch  (set nested key)
- *   kind=2  { k: string[], v: unknown }   — array/value replace (set nested key)
+ *   kind=0  { v: RawChatSession }                    — base snapshot (requests always [])
+ *   kind=1  { k: (string|number)[], v: unknown }     — scalar SET at key path
+ *   kind=2  { k: (string|number)[], v: unknown }     — array CONCAT or deep SET
  *
- * kind=1 and kind=2 use identical patch semantics: walk the key path and set
- * the leaf.  The LAST kind=2 entry for key ["requests"] holds the complete
- * conversation history.
+ * kind=2 semantics depend on the key path:
+ *   - All-string path ending at an existing array + array value → CONCAT (append new items).
+ *     This is how new requests are added one-by-one to the session.
+ *   - Path containing a numeric index → navigate into that array element and SET the leaf.
+ *     This is how a completed response is attached to a specific request, e.g.
+ *     k=["requests", 2, "response"].
+ * kind=1 always SETs (replaces) the leaf, including for array fields.
  */
 function parseJsonlSession(content: string): RawChatSession | null {
   let session: Record<string, unknown> | null = null;
@@ -34,12 +38,12 @@ function parseJsonlSession(content: string): RawChatSession | null {
       continue;
     }
     try {
-      const obj = JSON.parse(trimmed) as { kind?: number; k?: string[]; v?: unknown };
+      const obj = JSON.parse(trimmed) as { kind?: number; k?: (string | number)[]; v?: unknown };
       if (obj.kind === 0 && obj.v && typeof obj.v === 'object') {
         // Clone the base snapshot so patches don't mutate the parsed object
         session = { ...(obj.v as Record<string, unknown>) };
       } else if ((obj.kind === 1 || obj.kind === 2) && session && Array.isArray(obj.k) && obj.k.length > 0) {
-        applyJsonlPatch(session, obj.k, obj.v);
+        applyJsonlPatch(session, obj.k, obj.v, obj.kind);
       }
     } catch {
       // skip malformed lines
@@ -50,19 +54,57 @@ function parseJsonlSession(content: string): RawChatSession | null {
 }
 
 /**
- * Sets a value at the nested path described by `keys` inside `target`.
- * Intermediate objects are created if missing.
+ * Applies a JSONL patch to `target` at the nested path `keys`.
+ *
+ * For kind=2 with an all-string key path where the target leaf is already an
+ * array and the incoming value is also an array, the items are CONCATENATED
+ * (appended) rather than replaced.  This matches how Copilot Chat appends
+ * new requests to a session incrementally.
+ *
+ * For kind=1, or any path containing a numeric index, the leaf is always SET
+ * (replaced).
  */
-function applyJsonlPatch(target: Record<string, unknown>, keys: string[], value: unknown): void {
-  let node: Record<string, unknown> = target;
+function applyJsonlPatch(
+  target: Record<string, unknown>,
+  keys: (string | number)[],
+  value: unknown,
+  kind: number
+): void {
+  const hasNumericKey = keys.some(k => typeof k === 'number');
+
+  // Navigate to the parent node, handling numeric indices as array accesses
+  let node: unknown = target;
   for (let i = 0; i < keys.length - 1; i++) {
     const key = keys[i];
-    if (node[key] == null || typeof node[key] !== 'object') {
-      node[key] = {};
+    if (typeof key === 'number') {
+      node = (node as unknown[])[key];
+    } else {
+      const obj = node as Record<string, unknown>;
+      if (obj[key] == null || typeof obj[key] !== 'object') {
+        obj[key] = {};
+      }
+      node = obj[key];
     }
-    node = node[key] as Record<string, unknown>;
+    if (node == null) return; // path doesn't exist, skip safely
   }
-  node[keys[keys.length - 1]] = value;
+
+  const lastKey = keys[keys.length - 1];
+
+  // kind=2 with all-string path: CONCAT arrays (incremental request append)
+  if (kind === 2 && !hasNumericKey && typeof lastKey === 'string') {
+    const obj = node as Record<string, unknown>;
+    if (Array.isArray(obj[lastKey]) && Array.isArray(value)) {
+      obj[lastKey] = [...(obj[lastKey] as unknown[]), ...value];
+      return;
+    }
+  }
+
+  // Default: SET (replace)
+  if (typeof lastKey === 'number') {
+    (node as unknown[])[lastKey] = value;
+  } else {
+    (node as Record<string, unknown>)[lastKey] = value;
+  }
 }
 
 export function normalizeSession(

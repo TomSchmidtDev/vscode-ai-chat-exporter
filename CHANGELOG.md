@@ -2,6 +2,11 @@
 
 All notable changes to AI Chat Exporter will be documented in this file.
 
+## [0.2.2] - 2026-04-14
+
+### Fixed
+- **Still-missing messages**: `kind=2` JSONL patches with an all-string key path append items to the existing array instead of replacing it — this is how Copilot Chat adds new requests one-by-one to a session. Previously every new request overwrote the previous ones, leaving only the last request visible. `kind=2` patches with a numeric index in the path (e.g. `["requests", 2, "response"]`) still perform a targeted SET to attach completed responses.
+
 ## [0.2.1] - 2026-04-14
 
 ### Fixed
