@@ -5,7 +5,7 @@ import { ExtensionToWebview, WebviewToExtension, ChatSession, ChatWorkspace } fr
 import { getWorkspaceStorageBase, getEmptyWindowChatSessionsDir } from '../storage/pathResolver';
 import { discoverAllWorkspaces, loadWorkspaceFromHashDir, loadEmptyWindowSessions } from '../storage/workspaceDiscovery';
 import { readSessionFile, normalizeSession } from '../storage/sessionReader';
-import { MarkdownExporter } from '../exporters/markdownExporter';
+import { MarkdownExporter, makeFilename } from '../exporters/markdownExporter';
 import { HtmlExporter } from '../exporters/htmlExporter';
 
 export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
@@ -172,9 +172,12 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
       return;
     }
 
+    const outputPath = await this._pickSavePath(sessions, 'md');
+    if (!outputPath) { return; }
+
     try {
       const exporter = new MarkdownExporter();
-      const exported = await exporter.exportSessions(sessions, messageFilters);
+      const exported = await exporter.exportSessions(sessions, messageFilters, outputPath);
       if (exported.length > 0) {
         this._post({ type: 'exportDone', path: path.dirname(exported[0]), count: exported.length });
         const open = await vscode.window.showInformationMessage(
@@ -202,9 +205,12 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
       return;
     }
 
+    const outputPath = await this._pickSavePath(sessions, 'html');
+    if (!outputPath) { return; }
+
     try {
       const exporter = new HtmlExporter();
-      const exported = await exporter.exportSessions(sessions, messageFilters, theme);
+      const exported = await exporter.exportSessions(sessions, messageFilters, theme, outputPath);
       if (exported.length > 0) {
         this._post({ type: 'exportDone', path: path.dirname(exported[0]), count: exported.length });
         const open = await vscode.window.showInformationMessage(
@@ -219,6 +225,42 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
       const message = err instanceof Error ? err.message : String(err);
       vscode.window.showErrorMessage(`Export failed: ${message}`);
     }
+  }
+
+  /**
+   * Shows the appropriate save dialog depending on the number of sessions:
+   * - 1 session  → Save As dialog (user chooses filename + location)
+   * - N sessions → Folder picker (filenames are auto-generated)
+   *
+   * Falls back to the configured outputDirectory setting without showing any
+   * dialog if one is set.
+   */
+  private async _pickSavePath(sessions: ChatSession[], ext: string): Promise<string | undefined> {
+    const config = vscode.workspace.getConfiguration('aiChatExporter');
+    const configured = config.get<string>('outputDirectory', '');
+    if (configured) {
+      return configured;
+    }
+
+    if (sessions.length === 1) {
+      const defaultName = makeFilename(sessions[0], ext);
+      const uri = await vscode.window.showSaveDialog({
+        defaultUri: vscode.Uri.file(defaultName),
+        filters: ext === 'md'
+          ? { 'Markdown': ['md'] }
+          : { 'HTML': ['html'] },
+        saveLabel: 'Export',
+      });
+      return uri?.fsPath;
+    }
+
+    const chosen = await vscode.window.showOpenDialog({
+      canSelectFiles: false,
+      canSelectFolders: true,
+      canSelectMany: false,
+      openLabel: 'Select Export Folder',
+    });
+    return chosen?.[0]?.fsPath;
   }
 
   private _resolveSessions(sessionIds: string[]): ChatSession[] {

@@ -4,18 +4,22 @@ import * as vscode from 'vscode';
 import { ChatSession } from '../types';
 
 export class MarkdownExporter {
+  /**
+   * @param outputPath  Either a concrete file path (single-session Save As)
+   *                    or a directory path (multi-session folder export).
+   */
   async exportSessions(
     sessions: ChatSession[],
-    messageFilters: Record<string, string[]>
+    messageFilters: Record<string, string[]>,
+    outputPath: string
   ): Promise<string[]> {
-    const outputDir = await pickOutputDir();
-    if (!outputDir) {
-      return [];
-    }
-
     const exported: string[] = [];
     for (const session of sessions) {
-      const filePath = path.join(outputDir, makeFilename(session, 'md'));
+      // If outputPath already has a .md extension it IS the target file;
+      // otherwise treat it as a directory and generate a filename.
+      const filePath = path.extname(outputPath).toLowerCase() === '.md'
+        ? outputPath
+        : path.join(outputPath, makeFilename(session, 'md'));
       const content = renderSession(session, messageFilters[session.id]);
       await fs.promises.writeFile(filePath, content, 'utf8');
       exported.push(filePath);
@@ -72,7 +76,7 @@ function renderSession(session: ChatSession, selectedIds?: string[]): string {
   return lines.join('\n');
 }
 
-function makeFilename(session: ChatSession, ext: string): string {
+export function makeFilename(session: ChatSession, ext: string): string {
   const date = new Date(session.createdAt).toISOString().slice(0, 10);
   const safe = session.title
     .replace(/[<>:"/\\|?*\n\r]/g, '-')
@@ -86,21 +90,3 @@ function makeFilename(session: ChatSession, ext: string): string {
 function escapeMarkdown(text: string): string {
   return text.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
 }
-
-async function pickOutputDir(): Promise<string | undefined> {
-  const config = vscode.workspace.getConfiguration('aiChatExporter');
-  const configured = config.get<string>('outputDirectory', '');
-  if (configured) {
-    return configured;
-  }
-
-  const chosen = await vscode.window.showOpenDialog({
-    canSelectFiles: false,
-    canSelectFolders: true,
-    canSelectMany: false,
-    openLabel: 'Select Export Folder',
-  });
-  return chosen?.[0]?.fsPath;
-}
-
-export { makeFilename, pickOutputDir };

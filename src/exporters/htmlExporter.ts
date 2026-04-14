@@ -5,7 +5,7 @@ import { marked, Renderer } from 'marked';
 import hljs from 'highlight.js';
 import { ChatSession, ChatMessage, Theme, ThemeColors } from '../types';
 import { THEMES } from '../themes/themes';
-import { makeFilename, pickOutputDir } from './markdownExporter';
+import { makeFilename } from './markdownExporter';
 
 // Import highlight.js CSS as text (inlined by esbuild loader:.css=text)
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -30,16 +30,16 @@ function configureMarked(): void {
 configureMarked();
 
 export class HtmlExporter {
+  /**
+   * @param outputPath  Either a concrete file path (single-session Save As)
+   *                    or a directory path (multi-session folder export).
+   */
   async exportSessions(
     sessions: ChatSession[],
     messageFilters: Record<string, string[]>,
-    themeName: string
+    themeName: string,
+    outputPath: string
   ): Promise<string[]> {
-    const outputDir = await pickOutputDir();
-    if (!outputDir) {
-      return [];
-    }
-
     const theme = resolveTheme(themeName);
     const exported: string[] = [];
 
@@ -49,7 +49,11 @@ export class HtmlExporter {
         : session.messages;
 
       const html = buildPage([{ session, messages: msgs }], theme);
-      const filePath = path.join(outputDir, makeFilename(session, 'html'));
+      // If outputPath already has a .html extension it IS the target file;
+      // otherwise treat it as a directory and generate a filename.
+      const filePath = path.extname(outputPath).toLowerCase() === '.html'
+        ? outputPath
+        : path.join(outputPath, makeFilename(session, 'html'));
       await fs.promises.writeFile(filePath, html, 'utf8');
       exported.push(filePath);
     }
