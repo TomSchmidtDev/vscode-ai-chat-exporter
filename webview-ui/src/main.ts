@@ -16,9 +16,6 @@ const selectedSessions = new Set<string>();
 // Per-session message selection; undefined entry = all messages selected
 const selectedMessages = new Map<string, Set<string>>();
 let activeSessionId: string | null = null;
-// Toggle state: tracks whether You/Copilot messages are globally included
-let showUser = true;
-let showAssistant = true;
 // Whether "show all workspaces" mode is active
 let showAllWorkspaces = false;
 
@@ -103,17 +100,17 @@ selectNoneBtn.addEventListener('click', () => {
 
 document.getElementById('btn-settings')?.addEventListener('click', () => post({ type: 'openSettings' }));
 
-// Toggle buttons: check or uncheck ALL message checkboxes of that role across all sessions
+// Toggle buttons: check or uncheck message checkboxes of the active session's role
 toggleUserBtn.addEventListener('click', () => {
-  showUser = !showUser;
-  toggleUserBtn.classList.toggle('active', showUser);
-  applyRoleToggle('user', showUser);
+  const nowActive = !toggleUserBtn.classList.contains('active');
+  toggleUserBtn.classList.toggle('active', nowActive);
+  applyRoleToggle('user', nowActive);
 });
 
 toggleCopilotBtn.addEventListener('click', () => {
-  showAssistant = !showAssistant;
-  toggleCopilotBtn.classList.toggle('active', showAssistant);
-  applyRoleToggle('assistant', showAssistant);
+  const nowActive = !toggleCopilotBtn.classList.contains('active');
+  toggleCopilotBtn.classList.toggle('active', nowActive);
+  applyRoleToggle('assistant', nowActive);
 });
 
 // Toggle between current workspace and all workspaces
@@ -152,21 +149,20 @@ function buildSessionItem(session: ChatSession): HTMLElement {
   el.dataset['sessionId'] = session.id;
 
   // Checkbox + title row
-  const label = makeEl('label', { className: 'session-label' });
-  label.title = session.title;
+  const row = makeEl('div', { className: 'session-label' });
+  row.title = session.title;
 
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
   checkbox.className = 'session-checkbox';
-  checkbox.addEventListener('change', (e) => {
-    e.stopPropagation();
+  checkbox.addEventListener('change', () => {
     if (checkbox.checked) selectedSessions.add(session.id);
     else selectedSessions.delete(session.id);
   });
 
-  label.appendChild(checkbox);
-  label.appendChild(makeEl('span', { className: 'session-title', textContent: truncate(session.title, 52) }));
-  el.appendChild(label);
+  row.appendChild(checkbox);
+  row.appendChild(makeEl('span', { className: 'session-title', textContent: truncate(session.title, 52) }));
+  el.appendChild(row);
 
   // Meta row
   const metaRow = makeEl('div', { className: 'session-meta-row' });
@@ -176,9 +172,9 @@ function buildSessionItem(session: ChatSession): HTMLElement {
   metaRow.appendChild(makeEl('span', { className: 'session-mode tag', textContent: session.mode }));
   el.appendChild(metaRow);
 
-  // Click on item (not checkbox) → show messages in right panel
+  // Click on item (not directly on checkbox) → show messages in right panel
   el.addEventListener('click', (e) => {
-    if ((e.target as HTMLElement).closest('input[type="checkbox"]')) return;
+    if ((e.target as HTMLElement) === checkbox) return;
     activateSession(session, el);
   });
 
@@ -191,6 +187,10 @@ function activateSession(session: ChatSession, el: HTMLElement): void {
 
   document.querySelectorAll('.session-item.active').forEach(s => s.classList.remove('active'));
   el.classList.add('active');
+
+  // Reset role toggle buttons to "all active" for the new session
+  toggleUserBtn.classList.add('active');
+  toggleCopilotBtn.classList.add('active');
 
   renderMessagePanel(session);
 }
@@ -224,17 +224,9 @@ function autoSelectMostRecent(): void {
 function renderMessagePanel(session: ChatSession): void {
   messagePanelTitle.textContent = session.title;
 
-  // Initialize message selection if not yet done
+  // Initialize message selection with all messages checked
   if (!selectedMessages.has(session.id)) {
-    const all = new Set(session.messages.map(m => m.id));
-    // Respect current role toggles
-    if (!showUser || !showAssistant) {
-      for (const m of session.messages) {
-        if (m.role === 'user' && !showUser) all.delete(m.id);
-        if (m.role === 'assistant' && !showAssistant) all.delete(m.id);
-      }
-    }
-    selectedMessages.set(session.id, all);
+    selectedMessages.set(session.id, new Set(session.messages.map(m => m.id)));
   }
 
   const msgSet = selectedMessages.get(session.id)!;
@@ -287,22 +279,20 @@ function updateMessageCount(session: ChatSession): void {
 // ─── Role toggle ──────────────────────────────────────────────────────────────
 
 /**
- * Checks or unchecks ALL message checkboxes of the given role across all sessions.
- * Updates both the selectedMessages state and visible checkboxes in the message panel.
+ * Checks or unchecks message checkboxes of the given role for the active session only.
  */
 function applyRoleToggle(role: 'user' | 'assistant', checked: boolean): void {
-  // Update state for all sessions (including those not yet displayed)
-  for (const ws of allWorkspaces) {
-    for (const session of ws.sessions) {
-      if (!selectedMessages.has(session.id)) {
-        selectedMessages.set(session.id, new Set(session.messages.map(m => m.id)));
-      }
-      const msgSet = selectedMessages.get(session.id)!;
-      for (const msg of session.messages) {
-        if (msg.role === role) {
-          if (checked) msgSet.add(msg.id); else msgSet.delete(msg.id);
-        }
-      }
+  if (!activeSessionId) return;
+  const session = findSession(activeSessionId);
+  if (!session) return;
+
+  if (!selectedMessages.has(session.id)) {
+    selectedMessages.set(session.id, new Set(session.messages.map(m => m.id)));
+  }
+  const msgSet = selectedMessages.get(session.id)!;
+  for (const msg of session.messages) {
+    if (msg.role === role) {
+      if (checked) msgSet.add(msg.id); else msgSet.delete(msg.id);
     }
   }
 
@@ -311,11 +301,7 @@ function applyRoleToggle(role: 'user' | 'assistant', checked: boolean): void {
     cb.checked = checked;
   });
 
-  // Refresh count display
-  if (activeSessionId) {
-    const session = findSession(activeSessionId);
-    if (session) updateMessageCount(session);
-  }
+  updateMessageCount(session);
 }
 
 // ─── Export helpers ───────────────────────────────────────────────────────────
@@ -326,11 +312,9 @@ function buildMessageFilters(sessionIds: string[]): Record<string, string[]> {
     for (const session of ws.sessions) {
       if (!sessionIds.includes(session.id)) { continue; }
       const msgSet = selectedMessages.get(session.id);
-      // If session was never shown, default to all messages respecting role toggles
+      // If session was never shown, default to all messages
       if (!msgSet) {
-        filters[session.id] = session.messages
-          .filter(m => (m.role === 'user' ? showUser : showAssistant))
-          .map(m => m.id);
+        filters[session.id] = session.messages.map(m => m.id);
       } else {
         filters[session.id] = Array.from(msgSet);
       }
