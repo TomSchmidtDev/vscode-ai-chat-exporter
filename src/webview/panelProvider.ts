@@ -326,7 +326,7 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
       </div>
       <div id="search-bar">
         <div id="search-row">
-          <input id="search-input" type="text" placeholder="${t('searchPlaceholder')}">
+          <input id="search-input" type="text" placeholder="${t('searchPlaceholder')}" aria-label="${t('searchPlaceholder')}">
           <button id="search-clear" class="secondary hidden" title="${t('searchClearTitle')}">✕</button>
         </div>
         <div id="search-scopes">

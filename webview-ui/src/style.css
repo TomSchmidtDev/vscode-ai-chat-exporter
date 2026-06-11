@@ -362,15 +362,15 @@ button.toggle:hover { opacity: 1; }
 
 .match-badge {
   flex-shrink: 0;
-  color: #ffd700;
+  color: var(--vscode-charts-yellow, #b8860b);
   font-weight: 600;
   font-size: 0.8em;
   margin-top: 2px;
 }
 
 .msg-preview mark {
-  background: #6b5900;
-  color: #ffd700;
+  background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 146, 0, 0.33));
+  color: inherit;
   border-radius: 2px;
   padding: 0 1px;
 }
