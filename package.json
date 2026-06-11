@@ -151,6 +151,7 @@
     "build:webview": "vite build --config webview-ui/vite.config.ts",
     "build:extension": "node esbuild.js",
     "build": "npm run build:webview && npm run build:extension",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p webview-ui/tsconfig.json",
     "test": "vitest run",
     "watch:extension": "node esbuild.js --watch",
     "watch:webview": "vite build --config webview-ui/vite.config.ts --watch",

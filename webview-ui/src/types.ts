@@ -29,7 +29,7 @@ export interface ChatMessage {
 }
 
 export type ExtensionToWebview =
-  | { type: 'sessions'; data: ChatWorkspace[] }
+  | { type: 'sessions'; data: ChatWorkspace[]; allWorkspaces: boolean }
   | { type: 'preview'; html: string }
   | { type: 'exportDone'; path: string; count: number }
   | { type: 'error'; message: string }
@@ -37,7 +37,7 @@ export type ExtensionToWebview =
 
 export type WebviewToExtension =
   | { type: 'ready' }
-  | { type: 'refresh' }
+  | { type: 'refresh'; allWorkspaces?: boolean }
   | { type: 'preview'; sessionId: string }
   | { type: 'exportMd'; sessionIds: string[]; messageFilters: Record<string, string[]> }
   | { type: 'exportHtml'; sessionIds: string[]; messageFilters: Record<string, string[]>; theme: string }
