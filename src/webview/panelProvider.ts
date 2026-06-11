@@ -324,6 +324,17 @@ export class ChatExporterViewProvider implements vscode.WebviewViewProvider {
         <button id="btn-toggle-copilot" class="toggle active" title="${t('btnToggleCopilotTitle')}">${t('btnToggleCopilot')}</button>
         <button id="btn-show-all" class="toggle" title="${t('btnShowAllTitle')}">${t('btnAllWs')}</button>
       </div>
+      <div id="search-bar">
+        <div id="search-row">
+          <input id="search-input" type="text" placeholder="${t('searchPlaceholder')}">
+          <button id="search-clear" class="secondary hidden" title="${t('searchClearTitle')}">✕</button>
+        </div>
+        <div id="search-scopes">
+          <label><input type="checkbox" id="search-prompts" checked> ${t('searchScopePrompts')}</label>
+          <label><input type="checkbox" id="search-responses" checked> ${t('searchScopeResponses')}</label>
+          <label><input type="checkbox" id="search-title" checked> ${t('searchScopeTitle')}</label>
+        </div>
+      </div>
       <div id="workspace-scope" class="scope-badge"></div>
       <div id="session-list"><div class="loading">${t('loadingShort')}</div></div>
     </div>

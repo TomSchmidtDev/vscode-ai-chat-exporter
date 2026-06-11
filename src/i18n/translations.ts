@@ -44,6 +44,14 @@ export const translations = {
     btnShowAllTitle: 'Show sessions from all workspaces',
     themeSelectTitle: 'HTML export theme',
 
+    // Search
+    searchPlaceholder: 'Search…  (AND, OR, "phrase")',
+    searchClearTitle: 'Clear search',
+    searchScopePrompts: 'Prompts',
+    searchScopeResponses: 'Responses',
+    searchScopeTitle: 'Title',
+    searchMatchStatus: '{matched} of {total} sessions match',
+
     // Dialogs (extension host)
     noSessionsSelected: 'No sessions selected for export.',
     exportedMd: 'Exported {count} session(s) to Markdown.',
@@ -107,6 +115,14 @@ export const translations = {
     btnAllWs: 'Alle WS',
     btnShowAllTitle: 'Sessions aller Workspaces anzeigen',
     themeSelectTitle: 'HTML-Exportthema',
+
+    // Search
+    searchPlaceholder: 'Suchen…  (AND, OR, "Phrase")',
+    searchClearTitle: 'Suche leeren',
+    searchScopePrompts: 'Prompts',
+    searchScopeResponses: 'Antworten',
+    searchScopeTitle: 'Titel',
+    searchMatchStatus: '{matched} von {total} Sessions passen',
 
     // Dialogs (extension host)
     noSessionsSelected: 'Keine Sessions zum Exportieren ausgew\u00e4hlt.',
