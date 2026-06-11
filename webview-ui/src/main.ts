@@ -1,4 +1,5 @@
 import type { ChatWorkspace, ChatSession, ChatMessage, ExtensionToWebview, WebviewToExtension } from './types';
+import { parseQuery, SearchMatcher, SearchNode, appendHighlighted } from './search';
 
 // VS Code API
 declare function acquireVsCodeApi(): {
@@ -30,6 +31,9 @@ const selectedMessages = new Map<string, Set<string>>();
 let activeSessionId: string | null = null;
 // Whether "show all workspaces" mode is active
 let showAllWorkspaces = false;
+// Active parsed search query; null = no filtering
+let activeQuery: SearchNode | null = null;
+let searchDebounce: number | undefined;
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
 
@@ -48,6 +52,11 @@ const toggleUserBtn    = document.getElementById('btn-toggle-user')!;
 const toggleCopilotBtn = document.getElementById('btn-toggle-copilot')!;
 const showAllBtn       = document.getElementById('btn-show-all')!;
 const workspaceScopeEl = document.getElementById('workspace-scope');
+const searchInput      = document.getElementById('search-input') as HTMLInputElement;
+const searchClearBtn   = document.getElementById('search-clear')!;
+const searchPromptsCb  = document.getElementById('search-prompts') as HTMLInputElement;
+const searchResponsesCb = document.getElementById('search-responses') as HTMLInputElement;
+const searchTitleCb    = document.getElementById('search-title') as HTMLInputElement;
 
 // ─── Message handling ─────────────────────────────────────────────────────────
 
@@ -68,8 +77,13 @@ window.addEventListener('message', (event: MessageEvent) => {
         workspaceScopeEl.textContent = msg.allWorkspaces ? t('scopeAll') : t('scopeCurrent');
       }
       renderSessionList();
-      autoSelectMostRecent();
-      showStatus(t('sessionsLoaded', { count: countSessions() }));
+      if (activeQuery) {
+        updateSearchStatus();
+        showResultSession();
+      } else {
+        autoSelectMostRecent();
+        showStatus(t('sessionsLoaded', { count: countSessions() }));
+      }
       break;
     case 'exportDone':
       showStatus(t('exportedFiles', { count: msg.count, path: msg.path }));
@@ -132,6 +146,115 @@ showAllBtn.addEventListener('click', () => {
   post({ type: 'refresh', allWorkspaces: showAllWorkspaces });
 });
 
+// ─── Search handlers ──────────────────────────────────────────────────────────
+
+searchInput.addEventListener('input', () => {
+  window.clearTimeout(searchDebounce);
+  searchDebounce = window.setTimeout(applySearch, 300);
+});
+
+searchClearBtn.addEventListener('click', () => {
+  window.clearTimeout(searchDebounce);
+  searchInput.value = '';
+  applySearch();
+  searchInput.focus();
+});
+
+for (const cb of [searchPromptsCb, searchResponsesCb, searchTitleCb]) {
+  cb.addEventListener('change', applySearch);
+}
+
+// ─── Search ───────────────────────────────────────────────────────────────────
+
+function applySearch(): void {
+  const raw = searchInput.value.trim();
+  searchClearBtn.classList.toggle('hidden', raw.length === 0);
+
+  if (raw.length === 0) {
+    activeQuery = null;
+    setSearchError(null);
+  } else {
+    try {
+      activeQuery = parseQuery(raw);
+      setSearchError(null);
+    } catch (e) {
+      // Invalid query: show error on the field, render unfiltered (IntelliJ behavior)
+      activeQuery = null;
+      setSearchError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  renderSessionList();
+  updateSearchStatus();
+  showResultSession();
+}
+
+function setSearchError(message: string | null): void {
+  searchInput.classList.toggle('invalid', message !== null);
+  searchInput.title = message ?? '';
+}
+
+function currentMatcher(): SearchMatcher | null {
+  return activeQuery ? new SearchMatcher(activeQuery) : null;
+}
+
+/**
+ * Number of hits in a session: title (if Title scope on) counts 1,
+ * plus each message whose text matches within the Prompts/Responses scope.
+ */
+function sessionMatchCount(session: ChatSession, matcher: SearchMatcher): number {
+  let count = 0;
+  if (searchTitleCb.checked && matcher.matches(session.title)) count++;
+  for (const msg of session.messages) {
+    const inScope = msg.role === 'user' ? searchPromptsCb.checked : searchResponsesCb.checked;
+    if (inScope && matcher.matches(msg.text)) count++;
+  }
+  return count;
+}
+
+function updateSearchStatus(): void {
+  const matcher = currentMatcher();
+  const total = countSessions();
+  if (!matcher) {
+    showStatus(t('sessionsLoaded', { count: total }));
+    return;
+  }
+  let matched = 0;
+  for (const ws of allWorkspaces) {
+    for (const s of ws.sessions) {
+      if (sessionMatchCount(s, matcher) > 0) matched++;
+    }
+  }
+  showStatus(t('searchMatchStatus', { matched, total }));
+}
+
+/**
+ * After a search change: activate the first matching session (display order);
+ * without matches/query keep the previously active session. Re-renders the
+ * message panel either way so highlights and dimming stay in sync.
+ */
+function showResultSession(): void {
+  const matcher = currentMatcher();
+  let target: ChatSession | undefined;
+
+  if (matcher) {
+    outer:
+    for (const ws of sortedWorkspaces()) {
+      for (const s of ws.sessions) {
+        if (sessionMatchCount(s, matcher) > 0) { target = s; break outer; }
+      }
+    }
+  }
+  if (!target && activeSessionId) target = findSession(activeSessionId);
+
+  if (!target) { clearMessagePanel(); return; }
+
+  activeSessionId = null; // force re-activation (activateSession early-returns on same id)
+  const safeId = target.id.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  const el = sessionList.querySelector<HTMLElement>(`[data-session-id="${safeId}"]`);
+  if (el) activateSession(target, el);
+}
+
 // ─── Session rendering ────────────────────────────────────────────────────────
 
 function renderSessionList(): void {
@@ -142,23 +265,31 @@ function renderSessionList(): void {
     return;
   }
 
-  const sortedWorkspaces = [...allWorkspaces].sort(
-    (a, b) => (b.sessions[0]?.lastMessageAt ?? 0) - (a.sessions[0]?.lastMessageAt ?? 0)
-  );
-
-  for (const ws of sortedWorkspaces) {
+  const matcher = currentMatcher();
+  for (const ws of sortedWorkspaces()) {
     const wsEl = makeEl('div', { className: 'workspace-group' });
     wsEl.appendChild(makeEl('div', { className: 'workspace-label', textContent: ws.displayName }));
     for (const session of ws.sessions) {
-      wsEl.appendChild(buildSessionItem(session));
+      wsEl.appendChild(buildSessionItem(session, matcher));
     }
     sessionList.appendChild(wsEl);
   }
 }
 
-function buildSessionItem(session: ChatSession): HTMLElement {
+function sortedWorkspaces(): ChatWorkspace[] {
+  return [...allWorkspaces].sort(
+    (a, b) => (b.sessions[0]?.lastMessageAt ?? 0) - (a.sessions[0]?.lastMessageAt ?? 0)
+  );
+}
+
+function buildSessionItem(session: ChatSession, matcher: SearchMatcher | null): HTMLElement {
   const el = makeEl('div', { className: 'session-item' });
   el.dataset['sessionId'] = session.id;
+  // Re-renders must preserve activation state (search re-renders the list)
+  if (session.id === activeSessionId) el.classList.add('active');
+
+  const matchCount = matcher ? sessionMatchCount(session, matcher) : -1;
+  if (matcher && matchCount === 0) el.classList.add('dimmed');
 
   // Checkbox + title row
   const row = makeEl('div', { className: 'session-label' });
@@ -167,12 +298,17 @@ function buildSessionItem(session: ChatSession): HTMLElement {
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
   checkbox.className = 'session-checkbox';
+  // Re-renders must preserve export selection (search never changes it)
+  checkbox.checked = selectedSessions.has(session.id);
   checkbox.addEventListener('change', () => {
     if (checkbox.checked) selectedSessions.add(session.id);
     else selectedSessions.delete(session.id);
   });
 
   row.appendChild(checkbox);
+  if (matcher && matchCount > 0) {
+    row.appendChild(makeEl('span', { className: 'match-badge', textContent: `[${matchCount}]` }));
+  }
   row.appendChild(makeEl('span', { className: 'session-title', textContent: truncate(session.title, 52) }));
   el.appendChild(row);
 
