@@ -383,16 +383,21 @@ function renderMessagePanel(session: ChatSession): void {
   }
 
   const msgSet = selectedMessages.get(session.id)!;
+  const matcher = currentMatcher();
   messageListView.replaceChildren();
 
+  let firstMatchEl: HTMLElement | null = null;
   for (const msg of session.messages) {
-    messageListView.appendChild(buildMessageItem(msg, msgSet));
+    const item = buildMessageItem(msg, msgSet, matcher);
+    if (matcher && !firstMatchEl && !item.classList.contains('dimmed')) firstMatchEl = item;
+    messageListView.appendChild(item);
   }
 
   updateMessageCount(session);
+  firstMatchEl?.scrollIntoView({ block: 'nearest' });
 }
 
-function buildMessageItem(msg: ChatMessage, msgSet: Set<string>): HTMLElement {
+function buildMessageItem(msg: ChatMessage, msgSet: Set<string>, matcher: SearchMatcher | null): HTMLElement {
   const label = makeEl('label', { className: `message-item message-${msg.role}` });
 
   const cb = document.createElement('input');
@@ -412,8 +417,25 @@ function buildMessageItem(msg: ChatMessage, msgSet: Set<string>): HTMLElement {
 
   label.appendChild(cb);
   label.appendChild(makeEl('span', { className: 'msg-role', textContent: msg.role === 'user' ? t('roleYou') : t('roleCopilot') }));
-  label.appendChild(makeEl('span', { className: 'msg-preview', textContent: truncate(msg.text.replace(/\n/g, ' '), 80) }));
 
+  const flat = msg.text.replace(/\n/g, ' ');
+  const preview = truncate(flat, 80);
+  const previewSpan = makeEl('span', { className: 'msg-preview' });
+
+  if (matcher) {
+    const inScope = msg.role === 'user' ? searchPromptsCb.checked : searchResponsesCb.checked;
+    if (inScope && matcher.matches(flat)) {
+      // Match decided on full text; highlight ranges computed on the visible preview
+      appendHighlighted(previewSpan, preview, matcher.matchRanges(preview));
+    } else {
+      previewSpan.textContent = preview;
+      label.classList.add('dimmed');
+    }
+  } else {
+    previewSpan.textContent = preview;
+  }
+
+  label.appendChild(previewSpan);
   return label;
 }
 
