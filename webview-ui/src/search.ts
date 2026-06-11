@@ -186,3 +186,27 @@ function mergeRanges(ranges: MatchRange[]): MatchRange[] {
   }
   return out;
 }
+
+// ─── DOM highlighting ─────────────────────────────────────────────────────────
+
+/**
+ * Appends text to parent, wrapping the given ranges in <mark> elements.
+ * DOM-based replacement for the IntelliJ buildHighlightedHtml (no innerHTML).
+ * Ranges must be sorted and non-overlapping (as returned by matchRanges).
+ */
+export function appendHighlighted(parent: Node, text: string, ranges: MatchRange[]): void {
+  if (ranges.length === 0) {
+    parent.appendChild(document.createTextNode(text));
+    return;
+  }
+  let cursor = 0;
+  for (const [start, end] of ranges) {
+    if (start >= text.length) break;
+    if (start > cursor) parent.appendChild(document.createTextNode(text.slice(cursor, start)));
+    const mark = document.createElement('mark');
+    mark.textContent = text.slice(start, end);
+    parent.appendChild(mark);
+    cursor = end;
+  }
+  if (cursor < text.length) parent.appendChild(document.createTextNode(text.slice(cursor)));
+}
