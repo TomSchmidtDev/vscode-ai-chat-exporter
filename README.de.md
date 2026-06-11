@@ -7,6 +7,7 @@ Eine VS Code-Extension, mit der du deine **GitHub Copilot-Chatverläufe** direkt
 ## Funktionen
 
 - **Zweispaltiges Seitenbereich-Layout** — Sitzungsliste links, Nachrichtenvorschau rechts
+- **Suche über Sitzungen und Nachrichten** — Filtern mit `AND`, `OR`, `"exakten Phrasen"` und Klammern; passende Sitzungen zeigen ein Treffer-Badge, Treffer werden in der Nachrichtenvorschau hervorgehoben, Suchbereich wählbar über Prompts / Antworten / Titel
 - **Aktueller-Workspace-Filter** — zeigt standardmäßig nur Sitzungen des aktiven Workspaces; **Alle WS** umschalten, um Sitzungen aller Workspaces anzuzeigen
 - **Sitzungen ohne Workspace** — Sitzungen, die ohne geöffneten Workspace-Ordner erstellt wurden, sind in der Alle-WS-Ansicht enthalten
 - **Einzelne Nachrichten auswählen** pro Sitzung für teilweise Exporte
@@ -41,10 +42,11 @@ Eine VS Code-Extension, mit der du deine **GitHub Copilot-Chatverläufe** direkt
 2. Das linke Panel zeigt alle GitHub Copilot-Chat-Sitzungen des aktuellen Workspaces
 3. Klicke auf **Alle WS**, um Sitzungen aller Workspaces anzuzeigen
 4. Klicke auf eine Sitzung, um ihre Nachrichten im rechten Panel zu sehen
-5. Wähle Sitzungen über die Checkboxen aus; **Alle** / **Keine** markiert oder demarkiert alle
-6. Blende optional mit den **Prompt**- / **Copilot**-Buttons einzelne Nachrichtenrollen ein oder aus
-7. Wähle ein HTML-Theme aus dem Dropdown und klicke auf **MD exportieren** oder **HTML exportieren**
-8. Bei einer einzelnen Sitzung öffnet sich ein Speichern-unter-Dialog mit vorausgefülltem Dateinamen; bei mehreren Sitzungen wird ein Zielordner gewählt
+5. Nutze das Suchfeld über der Sitzungsliste, um Sitzungen und Nachrichten zu finden — Wörter werden mit AND verknüpft, `OR`, `"exakte Phrasen"` und Klammern werden unterstützt; die Checkboxen **Prompts** / **Antworten** / **Titel** bestimmen den Suchbereich
+6. Wähle Sitzungen über die Checkboxen aus; **Alle** / **Keine** markiert oder demarkiert alle
+7. Blende optional mit den **Prompt**- / **Copilot**-Buttons einzelne Nachrichtenrollen ein oder aus
+8. Wähle ein HTML-Theme aus dem Dropdown und klicke auf **MD exportieren** oder **HTML exportieren**
+9. Bei einer einzelnen Sitzung öffnet sich ein Speichern-unter-Dialog mit vorausgefülltem Dateinamen; bei mehreren Sitzungen wird ein Zielordner gewählt
 
 ## Einstellungen
 

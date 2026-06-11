@@ -2,6 +2,19 @@
 
 All notable changes to AI Chat Exporter will be documented in this file.
 
+## [0.4.0] - 2026-06-11
+
+### Added
+- **Search across sessions and messages** — search bar above the session list, same engine and behavior as the IntelliJ plugin:
+  - Query syntax: words (implicit AND), `"quoted phrases"`, `AND` / `OR`, parentheses; invalid queries show an inline error
+  - Scope checkboxes **Prompts / Responses / Title**
+  - Non-matching sessions and messages are dimmed; matching sessions show a `[N]` hit-count badge
+  - Hits are highlighted in message previews; the first matching session/message is brought into view
+  - Status bar shows how many sessions match
+
+### Changed
+- New `npm run typecheck` script (extension host + webview); webview message protocol types synced with the extension host
+
 ## [0.3.0] - 2026-04-14
 
 ### Added

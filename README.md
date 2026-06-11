@@ -7,6 +7,7 @@ A VS Code extension that lets you export your **GitHub Copilot Chat history** to
 ## Features
 
 - **Two-panel sidebar** — sessions list on the left, message preview on the right
+- **Search across sessions and messages** — filter with `AND`, `OR`, `"exact phrases"` and parentheses; matching sessions show a hit-count badge and hits are highlighted in message previews, with Prompts / Responses / Title scope toggles
 - **Current-workspace filter** — shows only the sessions for your active workspace by default; toggle **All WS** to see sessions from every workspace
 - **Empty-window sessions** — sessions created without an open workspace folder are included in the All WS view
 - **Select individual messages** per session for partial exports
@@ -41,10 +42,11 @@ A VS Code extension that lets you export your **GitHub Copilot Chat history** to
 2. The left panel shows all GitHub Copilot chat sessions for the current workspace
 3. Click **All WS** to switch to a view showing sessions from all workspaces
 4. Click a session to preview its messages in the right panel
-5. Select sessions for export using the checkboxes; use **All** / **None** to select all or none
-6. Optionally toggle the **Prompt** / **Copilot** buttons to include or exclude each message role
-7. Choose an HTML theme from the dropdown, then click **Export MD** or **Export HTML**
-8. For a single session a Save As dialog opens with a pre-filled filename; for multiple sessions choose a target folder
+5. Use the search box above the session list to find sessions and messages — words combine with AND, supports `OR`, `"exact phrases"` and parentheses; the **Prompts** / **Responses** / **Title** checkboxes control where to search
+6. Select sessions for export using the checkboxes; use **All** / **None** to select all or none
+7. Optionally toggle the **Prompt** / **Copilot** buttons to include or exclude each message role
+8. Choose an HTML theme from the dropdown, then click **Export MD** or **Export HTML**
+9. For a single session a Save As dialog opens with a pre-filled filename; for multiple sessions choose a target folder
 
 ## Settings
 
