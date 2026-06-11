@@ -56,6 +56,8 @@ If `VSCE_PAT` is not set, the publish step is skipped silently — the GitHub Re
 
 Use **Node.js 20** or later. `@vscode/vsce` v3+ depends on `undici`, which uses the `File` global introduced in Node.js 20. Node.js 18 will fail with `ReferenceError: File is not defined`.
 
+**npm version matters for the lockfile:** `package-lock.json` is generated with **npm 11** and must only be regenerated with npm 11. npm 10 and npm 11 resolve vite 8's optional `esbuild` peer dependency differently, and each rejects the other's lockfile during `npm ci` ("Missing … from lock file" / "not in sync"). CI therefore runs **Node 24** (bundles npm 11) in both workflows.
+
 ---
 
 ## Build System
