@@ -115,3 +115,74 @@ export function parseQuery(input: string): SearchNode | null {
   if (peek().kind !== 'EOF') throw new QueryParseError(`Unexpected token: '${peek().value}'`);
   return node;
 }
+
+// ─── Matcher ──────────────────────────────────────────────────────────────────
+
+/** Half-open range [start, end) into the searched text. */
+export type MatchRange = [start: number, end: number];
+
+export class SearchMatcher {
+  constructor(private readonly root: SearchNode) {}
+
+  /** Returns true if text satisfies the full query (case-insensitive). */
+  matches(text: string): boolean {
+    return evalNode(this.root, text.toLowerCase());
+  }
+
+  /**
+   * Returns non-overlapping, sorted ranges where query terms appear.
+   * Only call this when matches() returns true — ranges may otherwise
+   * belong to only one branch of a failed AND.
+   */
+  matchRanges(text: string): MatchRange[] {
+    return collectRanges(this.root, text.toLowerCase());
+  }
+}
+
+function evalNode(node: SearchNode, lower: string): boolean {
+  switch (node.kind) {
+    case 'term':
+    case 'phrase':
+      return lower.includes(node.value.toLowerCase());
+    case 'and':
+      return evalNode(node.left, lower) && evalNode(node.right, lower);
+    case 'or':
+      return evalNode(node.left, lower) || evalNode(node.right, lower);
+  }
+}
+
+function collectRanges(node: SearchNode, lower: string): MatchRange[] {
+  switch (node.kind) {
+    case 'term':
+    case 'phrase':
+      return mergeRanges(occurrences(lower, node.value.toLowerCase()));
+    case 'and':
+    case 'or':
+      return mergeRanges([...collectRanges(node.left, lower), ...collectRanges(node.right, lower)]);
+  }
+}
+
+function occurrences(text: string, term: string): MatchRange[] {
+  if (term.length === 0) return [];
+  const result: MatchRange[] = [];
+  let from = 0;
+  for (;;) {
+    const idx = text.indexOf(term, from);
+    if (idx === -1) break;
+    result.push([idx, idx + term.length]);
+    from = idx + 1;
+  }
+  return result;
+}
+
+function mergeRanges(ranges: MatchRange[]): MatchRange[] {
+  if (ranges.length === 0) return [];
+  const sorted = ranges.map((r): MatchRange => [r[0], r[1]]).sort((a, b) => a[0] - b[0]);
+  const out: MatchRange[] = [sorted[0]];
+  for (const r of sorted.slice(1)) {
+    const last = out[out.length - 1];
+    if (r[0] <= last[1]) last[1] = Math.max(last[1], r[1]);
+    else out.push(r);
+  }
+  return out;
+}
