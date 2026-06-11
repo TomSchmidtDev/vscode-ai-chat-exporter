@@ -249,7 +249,12 @@ function showResultSession(): void {
 
   if (!target) { clearMessagePanel(); return; }
 
-  activeSessionId = null; // force re-activation (activateSession early-returns on same id)
+  if (target.id === activeSessionId) {
+    // Same session: re-render only the message panel so role-toggle state survives
+    renderMessagePanel(target);
+    return;
+  }
+
   const safeId = target.id.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
   const el = sessionList.querySelector<HTMLElement>(`[data-session-id="${safeId}"]`);
   if (el) activateSession(target, el);
